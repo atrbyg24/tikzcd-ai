@@ -17,7 +17,7 @@ def call_gemini_api_for_tikz(api_key, content_list):
     try:
         client = genai.Client(api_key=api_key)
                 
-        response = client.model.generate_content(
+        response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=content_list,
             config=types.GenerateContentConfig(thinking_config=types.ThinkingConfig(thinking_budget=-1) # Dynamic thinking
