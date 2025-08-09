@@ -84,7 +84,6 @@ def generate_tikz_code(image, api_key, progress_bar):
             prompt_parts.append(example_image)
             prompt_parts.append(f"Here is the correct TikZ-cd LaTeX code for the above diagram:\n\n```latex\n{example_tikz_code}\n```\n\n")
 
-        # Add the final instruction and the user's image
         prompt_parts.append(f"Now, based on these examples and the OCR text from the new image below, generate the complete and correct TikZ-cd LaTeX code. The extracted text is: '{text_from_image}'\n\nEnsure the code is enclosed within a document class and includes the necessary packages. Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code. Double check to make sure the code compiles correctly. If you cannot infer the diagram, provide a basic 2x2 diagram as a default.")
         prompt_parts.append(image)
 
