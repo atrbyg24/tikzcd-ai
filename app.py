@@ -9,22 +9,21 @@ from google.genai import types
 import os
 import time
 
-def call_gemini_api_for_tikz(api_key, prompt, pil_image, config):
+def call_gemini_api_for_tikz(api_key, contents):
     """
     Makes a call to the Gemini API with the given prompt and image
-    using the google-genai SDK.
+    using the google-generativeai SDK.
     """
     try:
         # Create a client instance first
         client = genai.Client(api_key=api_key)
 
-        # Create a list of parts for the prompt, including text and image
-        contents = [prompt, pil_image]
-        
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=contents,
-            config=config
+            config=types.GenerateContentConfig(
+        thinking_config=types.ThinkingConfig(thinking_budget=-1)
+            ),
         )
         
         # Return the generated text
