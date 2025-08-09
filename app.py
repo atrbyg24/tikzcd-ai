@@ -8,12 +8,6 @@ import json
 import base64
 from google import genai
 
-# Tesseract executable path. You'll need to set this if it's not in your PATH.
-try:
-    pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
-except FileNotFoundError:
-    st.warning("Pytesseract executable not found. Please make sure Tesseract is installed and the path is correct.")
-
 def image_to_base64(pil_image):
     """
     Converts a PIL Image object to a base64-encoded string.
