@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import cv2
 import pytesseract
 from PIL import Image
@@ -14,7 +13,6 @@ import time
 def image_to_base64(pil_image):
     """
     Converts a PIL Image object to a base64-encoded string.
-    This is necessary to send the image data to the Gemini API.
     """
     buffered = io.BytesIO()
     pil_image.save(buffered, format="PNG")
@@ -79,7 +77,8 @@ def generate_tikz_code(image, api_key, progress_bar):
 
         # --- Prepare the prompt for the LLM ---
         prompt = f"""
-        You are an expert in generating LaTeX code for commutative diagrams using the tikz-cd package.
+        You are an expert LaTeX typesetter specializing in beautiful and correct commutative diagrams. 
+        Your task is to accurately translate the visual diagram into its tikz-cd representation, paying close attention to labels and arrow directions.
         The following text was extracted from an image of a commutative diagram:
 
         "{text_from_image}"
@@ -87,6 +86,7 @@ def generate_tikz_code(image, api_key, progress_bar):
         Based on the image provided, generate the complete and correct TikZ-cd LaTeX code to reproduce the diagram.
         Ensure the code is enclosed within a document class and includes the necessary packages.
         Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code.
+        Double check to make sure the code compiles correctly.
         If you cannot infer the diagram, provide a basic 2x2 diagram as a default.
         """
         
@@ -152,4 +152,3 @@ with col2:
             st.write("### Generation Complete!")
             st.write("#### Generated TikZ-cd Code")
             st.code(st.session_state.tikz_output, language='latex')
-            
