@@ -36,6 +36,9 @@ def render_latex_to_image(latex_code):
     latex_code = latex_code.replace('\\', '\\\\')
     encoded_latex = urllib.parse.quote(latex_code)
     
+    # Remove Markdown code fences
+    latex_code = latex_code.replace("```latex", "").replace("```", "").strip()
+
     try:
         # Make a request to the rendering API
         response = requests.get(api_url + encoded_latex)
