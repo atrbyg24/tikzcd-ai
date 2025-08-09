@@ -3,4 +3,4 @@ opencv-python
 Pillow
 pytesseract
 numpy
-requests
+google-genai
