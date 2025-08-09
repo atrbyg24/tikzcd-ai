@@ -83,6 +83,7 @@ def generate_tikz_code(image, api_key, progress_bar):
             example_image = Image.open(example_image_path)
             example_tikz_code = r"""\documentclass{article}
 \usepackage{tikz-cd}
+\begin{document}
 \begin{center}
 \begin{tikzcd}
 T
@@ -95,6 +96,7 @@ T
 & Z
 \end{tikzcd}
 \end{center}
+
 \end{document}"""
 
             contents = [
@@ -113,6 +115,20 @@ T
         except FileNotFoundError:
             st.warning(f"Example image '{example_image_path}' not found. Using a standard prompt.")
             contents = [{"role": "user", "parts": [user_prompt_text, image]}]
+
+
+        progress_bar.progress(70, text="3. Calling Gemini API...")
+
+        # --- Call the Gemini API ---
+        tikz_output = call_gemini_api_for_tikz(api_key, contents)
+        
+        progress_bar.progress(100, text="Done!")
+
+        return tikz_output
+
+    except Exception as e:
+        st.error(f"An error occurred during image processing or API call: {e}")
+        return None
 
 
 # --- Streamlit UI ---
