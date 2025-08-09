@@ -11,10 +11,6 @@ from google.genai import types
 import os
 import time
 
-# The Tesseract path is not manually set here. On Streamlit Cloud,
-# it will be automatically found after installing the 'tesseract-ocr' package
-# via the packages.txt file.
-
 def image_to_base64(pil_image):
     """
     Converts a PIL Image object to a base64-encoded string.
@@ -157,17 +153,15 @@ with col1:
             st.session_state.pil_image = pil_image # Store image for the next run
 
 with col2:
-    if 'show_output' in st.session_state and st.session_state.show_output:
-        progress_bar = st.progress(0, text="Starting...")
-        
+    if 'show_output' in st.session_state and st.session_state.show_output and uploaded_file is not None:
         # Check if output has already been generated
         if 'tikz_output' not in st.session_state or st.session_state.tikz_output is None:
+            progress_bar = st.progress(0, text="Starting...")
             # Call the generation function and store the result
             st.session_state.tikz_output = generate_tikz_code(st.session_state.pil_image, api_key, progress_bar)
-        
-        # Clear the progress bar after completion
-        time.sleep(1)
-        progress_bar.empty()
+            # Clear the progress bar after completion
+            time.sleep(1)
+            progress_bar.empty()
 
         if st.session_state.tikz_output is not None:
             st.write("### Generation Complete!")
@@ -186,3 +180,4 @@ with col2:
                 </script>
                 """
                 components.html(js_copy)
+
