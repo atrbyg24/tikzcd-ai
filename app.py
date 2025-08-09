@@ -4,20 +4,10 @@ import pytesseract
 from PIL import Image
 import numpy as np
 import io
-import base64
 from google import genai
 from google.genai import types
 import os
 import time
-
-def image_to_base64(pil_image):
-    """
-    Converts a PIL Image object to a base64-encoded string.
-    """
-    buffered = io.BytesIO()
-    pil_image.save(buffered, format="PNG")
-    img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-    return img_str
 
 def call_gemini_api_for_tikz(api_key, prompt, pil_image, config):
     """
