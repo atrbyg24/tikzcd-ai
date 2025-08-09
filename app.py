@@ -6,6 +6,12 @@ import numpy as np
 import io
 import base64
 from google import genai
+from google.genai import types
+import os
+
+# The Tesseract path is not manually set here. On Streamlit Cloud,
+# it will be automatically found after installing the 'tesseract-ocr' package
+# via the packages.txt file.
 
 def image_to_base64(pil_image):
     """
@@ -17,19 +23,23 @@ def image_to_base64(pil_image):
     img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
     return img_str
 
-def call_gemini_api_for_tikz(prompt, pil_image):
+def call_gemini_api_for_tikz(api_key, prompt, pil_image, config):
     """
     Makes a call to the Gemini API with the given prompt and image
     using the google-genai SDK.
     """
-    # Use the GenerativeModel class for a multimodal request
-    model = genai.GenerativeModel('gemini-2.5-flash-preview-05-20')
-    
     try:
+        # Create a client instance first
+        client = genai.Client(api_key=api_key)
+
         # Create a list of parts for the prompt, including text and image
         contents = [prompt, pil_image]
         
-        response = model.generate_content(contents)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=contents,
+            config=config
+        )
         
         # Return the generated text
         return response.text
@@ -46,6 +56,14 @@ def generate_tikz_code(image, api_key):
     if not api_key:
         st.error("Gemini API key is not set. Please add it to your Streamlit secrets.")
         return None, None
+    
+    # We will also add the API key to environment variables so that it can be picked up by the SDK.
+    os.environ['GOOGLE_API_KEY'] = api_key
+
+    # Define the generation configuration with thinking_config
+    config = types.GenerateContentConfig(
+        thinking_config=types.ThinkingConfig(thinking_budget=0)
+    )
 
     try:
         # Convert the PIL image to a NumPy array for OpenCV
@@ -74,7 +92,7 @@ def generate_tikz_code(image, api_key):
 
         # --- Call the Gemini API ---
         st.info("Calling Gemini API to generate TikZ-cd code...")
-        tikz_output = call_gemini_api_for_tikz(prompt, image)
+        tikz_output = call_gemini_api_for_tikz(api_key, prompt, image, config)
         
         return tikz_output, open_cv_image
 
