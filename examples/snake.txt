@@ -1,0 +1,22 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{tikz-cd}
+
+\begin{document}
+\begin{tikzcd}
+A \arrow[r]
+& B \arrow[r]
+\arrow[d, phantom, ""{coordinate, name=Z}]
+& C \arrow[dll,
+"\delta"
+,
+rounded corners,
+to path={ -- ([xshift=2ex]\tikztostart.east)
+|- (Z) [near end]\tikztonodes
+-| ([xshift=-2ex]\tikztotarget.west)
+-- (\tikztotarget)}] \\
+D \arrow[r]
+& E \arrow[r]
+& F
+\end{tikzcd}
+\end{document}
