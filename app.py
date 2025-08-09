@@ -11,6 +11,7 @@ from google.genai import types
 import os
 import time
 import requests
+import urllib.parse
 
 def image_to_base64(pil_image):
     """
