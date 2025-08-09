@@ -74,7 +74,7 @@ def generate_tikz_code(image, api_key):
 
         # --- Call the Gemini API ---
         st.info("Calling Gemini API to generate TikZ-cd code...")
-        tikz_output = call_gemini_api_for_tikz(api_key, prompt, image)
+        tikz_output = call_gemini_api_for_tikz(prompt, image)
         
         return tikz_output, open_cv_image
 
