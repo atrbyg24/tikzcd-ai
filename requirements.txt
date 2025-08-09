@@ -4,4 +4,3 @@ Pillow
 pytesseract
 numpy
 google-genai
-requests
