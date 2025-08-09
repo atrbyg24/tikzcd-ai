@@ -15,12 +15,10 @@ def call_gemini_api_for_tikz(api_key, content_list):
     using the google-generativeai SDK.
     """
     try:
-        genai.configure(api_key=api_key)
-        
-        # Use a model capable of handling multi-modal input (text and images)
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        
-        response = model.generate_content(
+        client = genai.Client(api_key=api_key)
+                
+        response = client.model.generate_content(
+            model="gemini-2.5-flash",
             contents=content_list,
             config=types.GenerateContentConfig(thinking_config=types.ThinkingConfig(thinking_budget=-1) # Dynamic thinking
             ),
