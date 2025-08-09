@@ -60,7 +60,7 @@ def generate_tikz_code(image, api_key, progress_bar):
 
     # Define the generation configuration with thinking_config
     config = types.GenerateContentConfig(
-        thinking_config=types.ThinkingConfig(thinking_budget=0)
+        thinking_config=types.ThinkingConfig(thinking_budget=-1)
     )
 
     try:
