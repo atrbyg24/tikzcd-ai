@@ -8,10 +8,10 @@ import base64
 from google import genai
 from google.genai import types
 import os
+import time
 
-# The Tesseract path is not manually set here. On Streamlit Cloud,
-# it will be automatically found after installing the 'tesseract-ocr' package
-# via the packages.txt file.
+# Tesseract path is not manually set. On Streamlit Cloud,
+# it will be automatically found after installing the 'tesseract-ocr' package.
 
 def image_to_base64(pil_image):
     """
@@ -26,7 +26,7 @@ def image_to_base64(pil_image):
 def call_gemini_api_for_tikz(api_key, prompt, pil_image, config):
     """
     Makes a call to the Gemini API with the given prompt and image
-    using the google-genai SDK.
+    using the google-generativeai SDK.
     """
     try:
         # Create a client instance first
@@ -48,7 +48,7 @@ def call_gemini_api_for_tikz(api_key, prompt, pil_image, config):
         st.error(f"An API error occurred: {e}")
         return None
 
-def generate_tikz_code(image, api_key):
+def generate_tikz_code(image, api_key, progress_bar):
     """
     This is the core function demonstrating the LLM pipeline.
     It performs OCR and then builds a prompt for the LLM with the image data.
@@ -66,6 +66,9 @@ def generate_tikz_code(image, api_key):
     )
 
     try:
+        # Update progress bar
+        progress_bar.progress(10, text="1. Preprocessing image...")
+
         # Convert the PIL image to a NumPy array for OpenCV
         open_cv_image = np.array(image.convert('RGB'))
         open_cv_image = open_cv_image[:, :, ::-1].copy() # Convert RGB to BGR
@@ -74,6 +77,8 @@ def generate_tikz_code(image, api_key):
         gray_image = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
         text_from_image = pytesseract.image_to_string(gray_image).strip()
         
+        progress_bar.progress(40, text="2. Extracting text and features...")
+
         # --- Prepare the prompt for the LLM ---
         prompt = f"""
         You are an expert in generating LaTeX code for commutative diagrams using the tikz-cd package.
@@ -87,13 +92,13 @@ def generate_tikz_code(image, api_key):
         If you cannot infer the diagram, provide a basic 2x2 diagram as a default.
         """
         
-        st.write("### Generated Prompt for the LLM:")
-        st.code(prompt)
+        progress_bar.progress(70, text="3. Calling Gemini API...")
 
         # --- Call the Gemini API ---
-        st.info("Calling Gemini API to generate TikZ-cd code...")
         tikz_output = call_gemini_api_for_tikz(api_key, prompt, image, config)
         
+        progress_bar.progress(100, text="Done!")
+
         return tikz_output, open_cv_image
 
     except Exception as e:
@@ -117,30 +122,52 @@ else:
 
 uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
 
+# Initialize session state for button click
+if 'show_output' not in st.session_state:
+    st.session_state.show_output = False
+
 if uploaded_file is not None:
     # Read the image file and convert to a PIL Image object
     image_bytes = io.BytesIO(uploaded_file.getvalue())
     pil_image = Image.open(image_bytes)
 
-    # Display the uploaded image
     st.write("### Original Diagram")
     st.image(pil_image, caption="Uploaded Image", use_container_width=True)
 
     st.markdown("---")
+    
+    # Use a button to trigger code generation and set a session state
+    if st.button("Generate TikZ Code"):
+        st.session_state.show_output = True
 
-    # Generate the TikZ-cd code and display the processed image
-    if st.button("Generate Code"):
-        with st.spinner("Processing image and generating code..."):
-            tikz_output, processed_image = generate_tikz_code(pil_image, api_key)
+    if st.session_state.show_output:
+        progress_bar = st.progress(0, text="Starting...")
+        
+        # Call the generation function
+        tikz_output, processed_image = generate_tikz_code(pil_image, api_key, progress_bar)
+        
+        # Clear the progress bar after completion
+        time.sleep(1)
+        progress_bar.empty()
 
         if tikz_output and processed_image is not None:
-            st.write("### Generated TikZ-cd Code")
-            st.code(tikz_output, language='latex')
-
-            # Add a download button for the LaTeX code
-            st.download_button(
-                label="Download TikZ Code",
-                data=tikz_output,
-                file_name="diagram.tex",
-                mime="text/plain"
-            )
+            st.write("### Generation Complete!")
+            
+            # Create two columns for the output
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write("#### Processed Image (Edges Detected)")
+                st.image(processed_image, caption="Computer Vision Output", use_container_width=True)
+            
+            with col2:
+                st.write("#### Generated TikZ-cd Code")
+                st.code(tikz_output, language='latex')
+                
+                # Add a download button for the LaTeX code
+                st.download_button(
+                    label="Download TikZ Code",
+                    data=tikz_output,
+                    file_name="diagram.tex",
+                    mime="text/plain"
+                )
