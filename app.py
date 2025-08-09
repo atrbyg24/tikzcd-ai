@@ -31,7 +31,9 @@ def render_latex_to_image(latex_code):
     # The API endpoint for a free LaTeX rendering service
     api_url = "https://latex.codecogs.com/png.latex?"
 
-    # URL-encode the LaTeX code
+    # The rendering API requires proper URL encoding. We need to replace
+    # backslashes with double backslashes for correct rendering.
+    latex_code = latex_code.replace('\\', '\\\\')
     encoded_latex = urllib.parse.quote(latex_code)
     
     try:
