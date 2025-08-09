@@ -7,10 +7,6 @@ import io
 import base64
 from google import genai
 
-# The Tesseract path is not manually set here. On Streamlit Cloud,
-# it will be automatically found after installing the 'tesseract-ocr' package
-# via the packages.txt file.
-
 def image_to_base64(pil_image):
     """
     Converts a PIL Image object to a base64-encoded string.
