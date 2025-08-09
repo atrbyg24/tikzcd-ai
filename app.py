@@ -20,7 +20,7 @@ def image_to_base64(pil_image):
 def call_gemini_api_for_tikz(api_key, prompt, pil_image):
     """
     Makes a call to the Gemini API with the given prompt and image
-    using the google-generativeai SDK.
+    using the google-genai SDK.
     """
     # Configure the API key
     genai.configure(api_key=api_key)
