@@ -4,9 +4,12 @@ import pytesseract
 from PIL import Image
 import numpy as np
 import io
-import json
 import base64
 from google import genai
+
+# The Tesseract path is not manually set here. On Streamlit Cloud,
+# it will be automatically found after installing the 'tesseract-ocr' package
+# via the packages.txt file.
 
 def image_to_base64(pil_image):
     """
