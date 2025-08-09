@@ -10,8 +10,6 @@ from google import genai
 from google.genai import types
 import os
 import time
-import requests
-import urllib.parse
 
 def image_to_base64(pil_image):
     """
@@ -22,33 +20,6 @@ def image_to_base64(pil_image):
     pil_image.save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
     return img_str
-
-def render_latex_to_image(latex_code):
-    """
-    Renders LaTeX code into an image using a public API.
-    Returns the image as bytes.
-    """
-    # The API endpoint for a free LaTeX rendering service
-    api_url = "https://latex.codecogs.com/png.latex?"
-
-    # The rendering API requires proper URL encoding. We need to replace
-    # backslashes with double backslashes for correct rendering.
-    latex_code = latex_code.replace('\\', '\\\\')
-    encoded_latex = urllib.parse.quote(latex_code)
-    
-    # Remove Markdown code fences
-    latex_code = latex_code.replace("```latex", "").replace("```", "").strip()
-
-    try:
-        # Make a request to the rendering API
-        response = requests.get(api_url + encoded_latex)
-        response.raise_for_status()
-        
-        return response.content
-    
-    except requests.exceptions.RequestException as e:
-        st.error(f"An error occurred while rendering the LaTeX: {e}")
-        return None
 
 def call_gemini_api_for_tikz(api_key, prompt, pil_image, config):
     """
@@ -179,25 +150,12 @@ with col2:
 
         if st.session_state.tikz_output is not None:
             st.write("### Generation Complete!")
+            st.write("#### Generated TikZ-cd Code")
+            st.code(st.session_state.tikz_output, language='latex')
             
-            # Create tabs for the output
-            tab1, tab2 = st.tabs(["Raw Code", "Rendered Output"])
-            
-            with tab1:
-                st.write("#### Generated TikZ-cd Code")
-                st.code(st.session_state.tikz_output, language='latex')
-                
-                st.download_button(
-                    label="Download Full LaTeX",
-                    data=st.session_state.tikz_output,
-                    file_name="diagram.tex",
-                    mime="text/plain"
-                )
-            
-            with tab2:
-                st.write("#### Rendered LaTeX Output")
-                rendered_image_bytes = render_latex_to_image(st.session_state.tikz_output)
-                if rendered_image_bytes:
-                    st.image(rendered_image_bytes, caption="Rendered Diagram", use_container_width=True)
-                else:
-                    st.warning("Could not render the LaTeX output.")
+            st.download_button(
+                label="Download Full LaTeX",
+                data=st.session_state.tikz_output,
+                file_name="diagram.tex",
+                mime="text/plain"
+            )
