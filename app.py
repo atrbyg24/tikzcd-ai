@@ -89,7 +89,7 @@ def generate_tikz_code(image, api_key, progress_bar):
 
         Based on the image provided, generate the complete and correct TikZ-cd LaTeX code to reproduce the diagram.
         Ensure the code is enclosed within a document class and includes the necessary packages.
-        Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code.
+        Do not add any extra explanations or text, just the full LaTeX code.
         If you cannot infer the diagram, provide a basic 2x2 diagram as a default.
         """
         
@@ -122,7 +122,7 @@ else:
     st.warning("Gemini API key not found in secrets. Please add it to your app's secrets.")
 
 # Use columns for a side-by-side layout
-col1, col2 = st.columns(2)
+col1, col2 = st.columns([1, 0.1, 1])
 
 with col1:
     uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
