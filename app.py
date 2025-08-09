@@ -9,21 +9,22 @@ from google.genai import types
 import os
 import time
 
-def call_gemini_api_for_tikz(api_key, contents):
+def call_gemini_api_for_tikz(api_key, prompt, pil_image, config):
     """
     Makes a call to the Gemini API with the given prompt and image
-    using the google-generativeai SDK.
+    using the google-genai SDK.
     """
     try:
         # Create a client instance first
         client = genai.Client(api_key=api_key)
 
+        # Create a list of parts for the prompt, including text and image
+        contents = [prompt, pil_image]
+        
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=contents,
-            config=types.GenerateContentConfig(
-        thinking_config=types.ThinkingConfig(thinking_budget=-1)
-            ),
+            config=config
         )
         
         # Return the generated text
@@ -35,91 +36,52 @@ def call_gemini_api_for_tikz(api_key, contents):
 
 def generate_tikz_code(image, api_key, progress_bar):
     """
-    This is the core function demonstrating the LLM pipeline.
-    It performs OCR and then builds a prompt for the LLM with the image data.
+    This is the core function demonstrating the few-shot LLM pipeline.
+    It loads the example data, performs OCR, and then builds a multi-part
+    prompt with the example data and the user's image.
     """
     if not api_key:
         st.error("Gemini API key is not set. Please add it to your Streamlit secrets.")
-        return None, None
-    
-    # We will also add the API key to environment variables so that it can be picked up by the SDK.
-    os.environ['GOOGLE_API_KEY'] = api_key
+        return None
 
     try:
+        # Load the few-shot example data inside the function
+        try:
+            examples_dir = "examples"
+            example_image_path = os.path.join(examples_dir, "fiber_product.png")
+            example_tikz_path = os.path.join(examples_dir, "fiber_product.txt")
+            example_image = Image.open(example_image_path)
+            with open(example_tikz_path, "r") as f:
+                example_tikz_code = f.read()
+        except FileNotFoundError:
+            st.error(f"Few-shot example files '{os.path.basename(example_image_path)}' or '{os.path.basename(example_tikz_path)}' not found in the '{examples_dir}' folder. Please ensure they are there.")
+            return None, None
+
         # Update progress bar
         progress_bar.progress(10, text="1. Preprocessing image...")
 
-        # Convert the PIL image to a NumPy array for OpenCV
+        # --- Image Preprocessing and OCR (on the user's image) ---
         open_cv_image = np.array(image.convert('RGB'))
-        open_cv_image = open_cv_image[:, :, ::-1].copy() # Convert RGB to BGR
-
-        # --- Image Preprocessing and OCR ---
+        open_cv_image = open_cv_image[:, :, ::-1].copy()
         gray_image = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
         text_from_image = pytesseract.image_to_string(gray_image).strip()
         
-        progress_bar.progress(40, text="2. Extracting text and features...")
+        progress_bar.progress(40, text="2. Building few-shot prompt...")
 
-        # --- Prepare the prompt for the LLM ---
-        # Define the prompt for the user's image
-        user_prompt_text = f"""
-        You are an expert LaTeX typesetter specializing in beautiful and correct commutative diagrams. 
-        Your task is to accurately translate the visual diagram into its tikz-cd representation, paying close attention to labels and arrow directions.
-
-        The following text was extracted from an image of a commutative diagram:
-
-        "{text_from_image}"
-
-        Based on the image provided, generate the complete and correct TikZ-cd LaTeX code to reproduce the diagram.
-        Ensure the code is enclosed within a document class and includes the necessary packages.
-        Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code.
-        Double check to make sure the code compiles correctly.
-        If you cannot infer the diagram, provide a basic 2x2 diagram as a default.
-        """
-
-        # --- Prepare a few-shot example ---
-        try:
-            example_image_path = "examples/fiber_product.png"
-            example_image = Image.open(example_image_path)
-            example_tikz_code = r"""\documentclass{article}
-\usepackage{tikz-cd}
-\begin{document}
-\begin{center}
-\begin{tikzcd}
-T
-\arrow[drr, bend left, "x"]
-\arrow[ddr, bend right, "y"]
-\arrow[dr, dotted, "{(x,y)}" description] & & \\
-& X \times_Z Y \arrow[r, "p"] \arrow[d, "q"]
-& X \arrow[d, "f"] \\
-& Y \arrow[r, "g"]
-& Z
-\end{tikzcd}
-\end{center}
-
-\end{document}"""
-
-            contents = [
-                {"role": "user", "parts": [
-                    "Here is a simple example diagram and the correct tikz-cd code to reproduce it. Please follow this style and syntax.",
-                    example_image
-                ]},
-                {"role": "model", "parts": [
-                    example_tikz_code
-                ]},
-                {"role": "user", "parts": [
-                    user_prompt_text,
-                    image
-                ]}
-            ]
-        except FileNotFoundError:
-            st.warning(f"Example image '{example_image_path}' not found. Using a standard prompt.")
-            contents = [{"role": "user", "parts": [user_prompt_text, image]}]
-
-
+        # --- Prepare the multi-part prompt for the LLM ---
+        # This list of parts is the core of few-shot prompting.
+        prompt_parts = [
+            "You are an expert LaTeX typesetter specializing in commutative diagrams. Your task is to accurately translate diagrams into TikZ-cd code. Below is one example. Please follow its style and format for the subsequent image.",
+            example_image,
+            f"Here is the correct TikZ-cd LaTeX code for the above diagram:\n\n```latex\n{example_tikz_code}\n```\n\n",
+            f"Now, based on this example and the OCR text from the new image below, generate the complete and correct TikZ-cd LaTeX code. The extracted text is: '{text_from_image}'\n\nEnsure the code is enclosed within a document class and includes the necessary packages. Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code. Double check to make sure the code compiles correctly. If you cannot infer the diagram, provide a basic 2x2 diagram as a default.",
+            image  # The user's uploaded image
+        ]
+        
         progress_bar.progress(70, text="3. Calling Gemini API...")
 
-        # --- Call the Gemini API ---
-        tikz_output = call_gemini_api_for_tikz(api_key, contents)
+        # --- Call the Gemini API with the multi-part prompt ---
+        tikz_output = call_gemini_api_for_tikz(api_key, prompt_parts)
         
         progress_bar.progress(100, text="Done!")
 
@@ -127,8 +89,7 @@ T
 
     except Exception as e:
         st.error(f"An error occurred during image processing or API call: {e}")
-        return None
-
+        return None, None
 
 # --- Streamlit UI ---
 
