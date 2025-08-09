@@ -8,7 +8,53 @@ from google import genai
 from google.genai import types
 import os
 import time
+import PyPDF2
+from collections import defaultdict
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
+# --- RAG Implementation Functions ---
+def load_and_chunk_pdf(pdf_path):
+    """Loads a PDF, extracts text, and chunks it into pages."""
+    text_chunks = []
+    try:
+        with open(pdf_path, "rb") as file:
+            reader = PyPDF2.PdfReader(file)
+            for page in reader.pages:
+                text = page.extract_text()
+                if text:
+                    text_chunks.append(text)
+    except FileNotFoundError:
+        st.error(f"Documentation PDF not found at {pdf_path}. Please download it and place it in the '{docs_dir}' folder.")
+        return None
+    except Exception as e:
+        st.error(f"An error occurred while reading the PDF: {e}")
+        return None
+    return text_chunks
+
+def create_vector_store(text_chunks):
+    """Creates a simple in-memory vector store using TF-IDF."""
+    if not text_chunks:
+        return None, None
+    vectorizer = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = vectorizer.fit_transform(text_chunks)
+    return vectorizer, tfidf_matrix
+
+def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
+    """Retrieves top_k most relevant chunks based on a query."""
+    if not vectorizer or not tfidf_matrix:
+        return ""
+    
+    query_vec = vectorizer.transform([query])
+    similarity_scores = cosine_similarity(query_vec, tfidf_matrix)
+    
+    # Get the indices of the top_k most similar chunks
+    top_k_indices = similarity_scores.argsort()[0][-top_k:][::-1]
+    
+    retrieved_context = "\n\n".join([text_chunks[i] for i in top_k_indices])
+    return retrieved_context
+
+# --- Gemini API Call Function ---
 def call_gemini_api_for_tikz(api_key, content_list):
     """
     Makes a few-shot call to the Gemini API with the given content list
@@ -30,28 +76,21 @@ def call_gemini_api_for_tikz(api_key, content_list):
         st.error(f"An API error occurred: {e}")
         return None
 
-def generate_tikz_code(image, api_key, progress_bar):
+def generate_tikz_code(image, api_key, progress_bar, examples):
     """
-    This is the core function demonstrating the few-shot LLM pipeline.
-    It loads the example data, performs OCR, and then builds a multi-part
-    prompt with the example data and the user's image.
+    This is the core function demonstrating the RAG pipeline.
+    It performs OCR, retrieves documentation, and then builds a
+    multi-part prompt with the example data and the user's image.
     """
     if not api_key:
         st.error("Gemini API key is not set. Please add it to your Streamlit secrets.")
         return None
 
     try:
-        # Load the few-shot example data inside the function
-        try:
-            examples_dir = "examples"
-            example_image_path = os.path.join(examples_dir, "fiber_product.png")
-            example_tikz_path = os.path.join(examples_dir, "fiber_product.txt")
-            example_image = Image.open(example_image_path)
-            with open(example_tikz_path, "r") as f:
-                example_tikz_code = f.read()
-        except FileNotFoundError:
-            st.error(f"Few-shot example files '{os.path.basename(example_image_path)}' or '{os.path.basename(example_tikz_path)}' not found in the '{examples_dir}' folder. Please ensure they are there.")
-            return None, None
+        # Retrieve RAG components from session state
+        vectorizer = st.session_state.vectorizer
+        tfidf_matrix = st.session_state.tfidf_matrix
+        doc_chunks = st.session_state.doc_chunks
 
         # Update progress bar
         progress_bar.progress(10, text="1. Preprocessing image...")
@@ -62,33 +101,28 @@ def generate_tikz_code(image, api_key, progress_bar):
         gray_image = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
         text_from_image = pytesseract.image_to_string(gray_image).strip()
         
-        progress_bar.progress(40, text="2. Building few-shot prompt...")
+        # Use the OCR text to retrieve relevant documentation chunks
+        progress_bar.progress(20, text="2. Retrieving context from documentation...")
+        retrieved_docs = retrieve_context(text_from_image, vectorizer, tfidf_matrix, doc_chunks)
+
+        progress_bar.progress(40, text="3. Building few-shot prompt...")
 
         # --- Prepare the multi-part prompt for the LLM ---
-        # This list of parts is the core of few-shot prompting.
+        # Start with the RAG context
         prompt_parts = [
-            "You are an expert LaTeX typesetter specializing in commutative diagrams. Your task is to accurately translate diagrams into TikZ-cd code. Below are a few examples. Please follow their style and format for the subsequent image."
+            f"You are an expert LaTeX typesetter specializing in commutative diagrams. You will use the following documentation to help you generate correct TikZ-cd code:\n\n---\n{retrieved_docs}\n---\n\nBelow are a few examples to guide your style and format. Please follow them for the subsequent image."
         ]
-
-        example_names = ['fiber_product','snake','cube']
-        examples_dir = "examples"
-        examples = []
-        for name in example_names:
-            image_path = os.path.join(examples_dir, f"{name}.png")
-            tikz_path = os.path.join(examples_dir, f"{name}.txt")
-            example_image = Image.open(image_path)
-            with open(tikz_path, "r") as f:
-                example_tikz_code = f.read()
-                examples.append((example_image, example_tikz_code))
-        for example_image, example_tikz_code in examples:    
+        
+        # Add all the few-shot examples to the prompt_parts list
+        for example_image, example_tikz_code in examples:
             prompt_parts.append(example_image)
             prompt_parts.append(f"Here is the correct TikZ-cd LaTeX code for the above diagram:\n\n```latex\n{example_tikz_code}\n```\n\n")
 
-        prompt_parts.append(f"Now, based on these examples and the OCR text from the new image below, generate the complete and correct TikZ-cd LaTeX code. The extracted text is: '{text_from_image}'\n\nEnsure the code is enclosed within a document class and includes the necessary packages. Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code. Double check to make sure the code compiles correctly. If you cannot infer the diagram, provide a basic 2x2 diagram as a default.")
+        # Add the final instruction and the user's image
+        prompt_parts.append(f"Now, based on these examples, the provided documentation, and the OCR text from the new image below, generate the complete and correct TikZ-cd LaTeX code. The extracted text is: '{text_from_image}'\n\nEnsure the code is enclosed within a document class and includes the necessary packages. Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code. Double check to make sure the code compiles correctly. If you cannot infer the diagram, provide a basic 2x2 diagram as a default.")
         prompt_parts.append(image)
-
         
-        progress_bar.progress(70, text="3. Calling Gemini API...")
+        progress_bar.progress(70, text="4. Calling Gemini API...")
 
         # --- Call the Gemini API with the multi-part prompt ---
         tikz_output = call_gemini_api_for_tikz(api_key, prompt_parts)
@@ -102,11 +136,9 @@ def generate_tikz_code(image, api_key, progress_bar):
         return None, None
 
 # --- Streamlit UI ---
-
 st.set_page_config(page_title="Diagram to TikZ-cd Converter", layout="centered")
-
 st.title("Diagram to TikZ-cd Converter")
-st.markdown("Upload an image of a commutative diagram and get the LaTeX code, powered by the Gemini API.")
+st.markdown("Upload an image of a commutative diagram and get the LaTeX code, powered by the Gemini API with few-shot prompting and RAG.")
 
 # Retrieve the API key from Streamlit secrets
 if 'GEMINI_API_KEY' in st.secrets:
@@ -116,33 +148,61 @@ else:
     api_key = None
     st.warning("Gemini API key not found in secrets. Please add it to your app's secrets.")
 
-# Use columns for a side-by-side layout with a small spacer column
+# Define the names of the few-shot examples to use
+example_names = ['fiber_product', 'snake', 'cube']
+examples = []
+# Load the few-shot example data once
+try:
+    examples_dir = "examples"
+    for name in example_names:
+        image_path = os.path.join(examples_dir, f"{name}.png")
+        tikz_path = os.path.join(examples_dir, f"{name}.txt")
+        example_image = Image.open(image_path)
+        with open(tikz_path, "r") as f:
+            example_tikz_code = f.read()
+        examples.append((example_image, example_tikz_code))
+except FileNotFoundError:
+    st.error(f"One or more few-shot example files not found in the '{examples_dir}' folder. Please ensure all files for {example_names} are there.")
+    st.stop()
+
+
+# Load RAG components once at the start and store in session state
+if 'vectorizer' not in st.session_state:
+    doc_chunks = load_and_chunk_pdf(doc_path)
+    if doc_chunks:
+        vectorizer, tfidf_matrix = create_vector_store(doc_chunks)
+        st.session_state.vectorizer = vectorizer
+        st.session_state.tfidf_matrix = tfidf_matrix
+        st.session_state.doc_chunks = doc_chunks
+
+
 col1, col2 = st.columns(2,gap="large")
 
 with col1:
     uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
     if uploaded_file is not None:
-        # Read the image file and convert to a PIL Image object
         image_bytes = io.BytesIO(uploaded_file.getvalue())
         pil_image = Image.open(image_bytes)
 
         st.write("### Original Diagram")
         st.image(pil_image, caption="Uploaded Image", use_container_width=True)
         
-        # Use a button to trigger code generation and set a session state
         if st.button("Generate TikZ Code"):
             st.session_state.show_output = True
-            st.session_state.tikz_output = None # Clear previous output
-            st.session_state.pil_image = pil_image # Store image for the next run
+            st.session_state.tikz_output = None
+            st.session_state.pil_image = pil_image
 
 with col2:
     if 'show_output' in st.session_state and st.session_state.show_output and uploaded_file is not None:
-        # Check if output has already been generated
         if 'tikz_output' not in st.session_state or st.session_state.tikz_output is None:
             progress_bar = st.progress(0, text="Starting...")
-            # Call the generation function and store the result
-            st.session_state.tikz_output = generate_tikz_code(st.session_state.pil_image, api_key, progress_bar)
-            # Clear the progress bar after completion
+            # The function call no longer needs the RAG arguments
+            st.session_state.tikz_output = generate_tikz_code(
+                st.session_state.pil_image,
+                api_key,
+                progress_bar,
+                examples
+            )
             time.sleep(1)
             progress_bar.empty()
 

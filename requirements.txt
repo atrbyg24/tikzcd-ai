@@ -4,3 +4,5 @@ Pillow
 pytesseract
 numpy
 google-genai
+PyPDF2
+scikit-learn
