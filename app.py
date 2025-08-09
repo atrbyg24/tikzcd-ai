@@ -153,9 +153,3 @@ with col2:
             st.write("#### Generated TikZ-cd Code")
             st.code(st.session_state.tikz_output, language='latex')
             
-            st.download_button(
-                label="Download Full LaTeX",
-                data=st.session_state.tikz_output,
-                file_name="diagram.tex",
-                mime="text/plain"
-            )
