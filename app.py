@@ -4,7 +4,6 @@ import pytesseract
 from PIL import Image
 import numpy as np
 import io
-import json
 import base64
 from google import genai
 
