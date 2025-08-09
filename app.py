@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import cv2
 import pytesseract
 from PIL import Image
@@ -27,7 +28,7 @@ def image_to_base64(pil_image):
 def call_gemini_api_for_tikz(api_key, prompt, pil_image, config):
     """
     Makes a call to the Gemini API with the given prompt and image
-    using the google-generativeai SDK.
+    using the google-genai SDK.
     """
     try:
         # Create a client instance first
@@ -48,6 +49,21 @@ def call_gemini_api_for_tikz(api_key, prompt, pil_image, config):
     except Exception as e:
         st.error(f"An API error occurred: {e}")
         return None
+
+def extract_tikz_only(full_latex_code):
+    """
+    Extracts only the tikzcd environment from the full LaTeX code.
+    """
+    start_tag = "\\begin{tikzcd}"
+    end_tag = "\\end{tikzcd}"
+    
+    start_index = full_latex_code.find(start_tag)
+    end_index = full_latex_code.find(end_tag) + len(end_tag)
+    
+    if start_index != -1 and end_index != -1:
+        return full_latex_code[start_index:end_index]
+    
+    return "Error: TikZ-cd environment not found."
 
 def generate_tikz_code(image, api_key, progress_bar):
     """
@@ -89,7 +105,7 @@ def generate_tikz_code(image, api_key, progress_bar):
 
         Based on the image provided, generate the complete and correct TikZ-cd LaTeX code to reproduce the diagram.
         Ensure the code is enclosed within a document class and includes the necessary packages.
-        Do not add any extra explanations or text, just the full LaTeX code.
+        Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code.
         If you cannot infer the diagram, provide a basic 2x2 diagram as a default.
         """
         
@@ -100,11 +116,11 @@ def generate_tikz_code(image, api_key, progress_bar):
         
         progress_bar.progress(100, text="Done!")
 
-        return tikz_output, open_cv_image
+        return tikz_output
 
     except Exception as e:
         st.error(f"An error occurred during image processing or API call: {e}")
-        return None, None
+        return None
 
 # --- Streamlit UI ---
 
@@ -121,8 +137,8 @@ else:
     api_key = None
     st.warning("Gemini API key not found in secrets. Please add it to your app's secrets.")
 
-# Use columns for a side-by-side layout
-col1, col2 = st.columns(2,gap="medium")
+# Use columns for a side-by-side layout with a small spacer column
+col1, col_spacer, col2 = st.columns([1, 0.1, 1])
 
 with col1:
     uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
@@ -137,36 +153,36 @@ with col1:
         # Use a button to trigger code generation and set a session state
         if st.button("Generate TikZ Code"):
             st.session_state.show_output = True
+            st.session_state.tikz_output = None # Clear previous output
+            st.session_state.pil_image = pil_image # Store image for the next run
 
 with col2:
-    if 'show_output' not in st.session_state:
-        st.session_state.show_output = False
-    
-    if st.session_state.show_output and uploaded_file is not None:
+    if 'show_output' in st.session_state and st.session_state.show_output:
         progress_bar = st.progress(0, text="Starting...")
         
-        # Call the generation function
-        tikz_output, processed_image = generate_tikz_code(pil_image, api_key, progress_bar)
+        # Check if output has already been generated
+        if 'tikz_output' not in st.session_state or st.session_state.tikz_output is None:
+            # Call the generation function and store the result
+            st.session_state.tikz_output = generate_tikz_code(st.session_state.pil_image, api_key, progress_bar)
         
         # Clear the progress bar after completion
         time.sleep(1)
         progress_bar.empty()
 
-        if tikz_output is not None:
+        if st.session_state.tikz_output is not None:
             st.write("### Generation Complete!")
             
             st.write("#### Generated TikZ-cd Code")
-            st.code(tikz_output, language='latex')
+            st.code(st.session_state.tikz_output, language='latex')
             
             # Button to copy code to clipboard
             if st.button("Copy TikZ Code"):
-                st.session_state.code_to_copy = extract_tikz_only(tikz_output)
+                code_to_copy = extract_tikz_only(st.session_state.tikz_output)
                 # Create a simple JavaScript command to copy the text
                 js_copy = f"""
                 <script>
-                    navigator.clipboard.writeText(`{st.session_state.code_to_copy}`);
+                    navigator.clipboard.writeText(`{code_to_copy}`);
                     alert('Code copied to clipboard!');
                 </script>
                 """
-                st.components.v1.html(js_copy)
-
+                components.html(js_copy)
