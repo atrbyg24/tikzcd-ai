@@ -46,21 +46,6 @@ def call_gemini_api_for_tikz(api_key, prompt, pil_image, config):
         st.error(f"An API error occurred: {e}")
         return None
 
-def extract_tikz_only(full_latex_code):
-    """
-    Extracts only the tikzcd environment from the full LaTeX code.
-    """
-    start_tag = "\\begin{tikzcd}"
-    end_tag = "\\end{tikzcd}"
-    
-    start_index = full_latex_code.find(start_tag)
-    end_index = full_latex_code.find(end_tag) + len(end_tag)
-    
-    if start_index != -1 and end_index != -1:
-        return full_latex_code[start_index:end_index]
-    
-    return "Error: TikZ-cd environment not found."
-
 def generate_tikz_code(image, api_key, progress_bar):
     """
     This is the core function demonstrating the LLM pipeline.
@@ -168,16 +153,3 @@ with col2:
             
             st.write("#### Generated TikZ-cd Code")
             st.code(st.session_state.tikz_output, language='latex')
-            
-            # Button to copy code to clipboard
-            if st.button("Copy TikZ Code"):
-                code_to_copy = extract_tikz_only(st.session_state.tikz_output)
-                # Create a simple JavaScript command to copy the text
-                js_copy = f"""
-                <script>
-                    navigator.clipboard.writeText(`{code_to_copy}`);
-                    alert('Code copied to clipboard!');
-                </script>
-                """
-                components.html(js_copy)
-
