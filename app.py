@@ -4,12 +4,13 @@ import pytesseract
 from PIL import Image
 import numpy as np
 import io
+import json
 import base64
 from google import genai
 
 # Tesseract executable path. You'll need to set this if it's not in your PATH.
 try:
-    pytesseract.pytesseract.tesseract_cmd = r'/usr/local/bin/tesseract'
+    pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
 except FileNotFoundError:
     st.warning("Pytesseract executable not found. Please make sure Tesseract is installed and the path is correct.")
 
