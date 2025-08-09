@@ -158,10 +158,15 @@ with col2:
             st.write("#### Generated TikZ-cd Code")
             st.code(tikz_output, language='latex')
             
-            # Add a download button for the LaTeX code
-            st.download_button(
-                label="Download TikZ Code",
-                data=tikz_output,
-                file_name="diagram.tex",
-                mime="text/plain"
-            )
+            # Button to copy code to clipboard
+            if st.button("Copy TikZ Code"):
+                st.session_state.code_to_copy = extract_tikz_only(tikz_output)
+                # Create a simple JavaScript command to copy the text
+                js_copy = f"""
+                <script>
+                    navigator.clipboard.writeText(`{st.session_state.code_to_copy}`);
+                    alert('Code copied to clipboard!');
+                </script>
+                """
+                st.components.v1.html(js_copy)
+
