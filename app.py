@@ -17,14 +17,11 @@ def image_to_base64(pil_image):
     img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
     return img_str
 
-def call_gemini_api_for_tikz(api_key, prompt, pil_image):
+def call_gemini_api_for_tikz(prompt, pil_image):
     """
     Makes a call to the Gemini API with the given prompt and image
     using the google-genai SDK.
     """
-    # Configure the API key
-    genai.configure(api_key=api_key)
-
     # Use the GenerativeModel class for a multimodal request
     model = genai.GenerativeModel('gemini-2.5-flash-preview-05-20')
     
