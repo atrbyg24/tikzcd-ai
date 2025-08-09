@@ -10,8 +10,9 @@ from google.genai import types
 import os
 import time
 
-# Tesseract path is not manually set. On Streamlit Cloud,
-# it will be automatically found after installing the 'tesseract-ocr' package.
+# The Tesseract path is not manually set here. On Streamlit Cloud,
+# it will be automatically found after installing the 'tesseract-ocr' package
+# via the packages.txt file.
 
 def image_to_base64(pil_image):
     """
@@ -120,27 +121,28 @@ else:
     api_key = None
     st.warning("Gemini API key not found in secrets. Please add it to your app's secrets.")
 
-uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
+# Use columns for a side-by-side layout
+col1, col2 = st.columns(2)
 
-# Initialize session state for button click
-if 'show_output' not in st.session_state:
-    st.session_state.show_output = False
+with col1:
+    uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
+    if uploaded_file is not None:
+        # Read the image file and convert to a PIL Image object
+        image_bytes = io.BytesIO(uploaded_file.getvalue())
+        pil_image = Image.open(image_bytes)
 
-if uploaded_file is not None:
-    # Read the image file and convert to a PIL Image object
-    image_bytes = io.BytesIO(uploaded_file.getvalue())
-    pil_image = Image.open(image_bytes)
+        st.write("### Original Diagram")
+        st.image(pil_image, caption="Uploaded Image", use_container_width=True)
+        
+        # Use a button to trigger code generation and set a session state
+        if st.button("Generate TikZ Code"):
+            st.session_state.show_output = True
 
-    st.write("### Original Diagram")
-    st.image(pil_image, caption="Uploaded Image", use_container_width=True)
-
-    st.markdown("---")
+with col2:
+    if 'show_output' not in st.session_state:
+        st.session_state.show_output = False
     
-    # Use a button to trigger code generation and set a session state
-    if st.button("Generate TikZ Code"):
-        st.session_state.show_output = True
-
-    if st.session_state.show_output:
+    if st.session_state.show_output and uploaded_file is not None:
         progress_bar = st.progress(0, text="Starting...")
         
         # Call the generation function
@@ -150,24 +152,16 @@ if uploaded_file is not None:
         time.sleep(1)
         progress_bar.empty()
 
-        if tikz_output and processed_image is not None:
+        if tikz_output is not None:
             st.write("### Generation Complete!")
             
-            # Create two columns for the output
-            col1, col2 = st.columns(2)
+            st.write("#### Generated TikZ-cd Code")
+            st.code(tikz_output, language='latex')
             
-            with col1:
-                st.write("#### Processed Image (Edges Detected)")
-                st.image(processed_image, caption="Computer Vision Output", use_container_width=True)
-            
-            with col2:
-                st.write("#### Generated TikZ-cd Code")
-                st.code(tikz_output, language='latex')
-                
-                # Add a download button for the LaTeX code
-                st.download_button(
-                    label="Download TikZ Code",
-                    data=tikz_output,
-                    file_name="diagram.tex",
-                    mime="text/plain"
-                )
+            # Add a download button for the LaTeX code
+            st.download_button(
+                label="Download TikZ Code",
+                data=tikz_output,
+                file_name="diagram.tex",
+                mime="text/plain"
+            )
