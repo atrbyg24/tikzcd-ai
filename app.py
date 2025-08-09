@@ -46,11 +46,6 @@ def generate_tikz_code(image, api_key, progress_bar):
     # We will also add the API key to environment variables so that it can be picked up by the SDK.
     os.environ['GOOGLE_API_KEY'] = api_key
 
-    # Define the generation configuration with thinking_config
-    config = types.GenerateContentConfig(
-        thinking_config=types.ThinkingConfig(thinking_budget=-1)
-    )
-
     try:
         # Update progress bar
         progress_bar.progress(10, text="1. Preprocessing image...")
@@ -66,9 +61,11 @@ def generate_tikz_code(image, api_key, progress_bar):
         progress_bar.progress(40, text="2. Extracting text and features...")
 
         # --- Prepare the prompt for the LLM ---
-        prompt = f"""
+        # Define the prompt for the user's image
+        user_prompt_text = f"""
         You are an expert LaTeX typesetter specializing in beautiful and correct commutative diagrams. 
         Your task is to accurately translate the visual diagram into its tikz-cd representation, paying close attention to labels and arrow directions.
+
         The following text was extracted from an image of a commutative diagram:
 
         "{text_from_image}"
@@ -79,19 +76,44 @@ def generate_tikz_code(image, api_key, progress_bar):
         Double check to make sure the code compiles correctly.
         If you cannot infer the diagram, provide a basic 2x2 diagram as a default.
         """
-        
-        progress_bar.progress(70, text="3. Calling Gemini API...")
 
-        # --- Call the Gemini API ---
-        tikz_output = call_gemini_api_for_tikz(api_key, prompt, image, config)
-        
-        progress_bar.progress(100, text="Done!")
+        # --- Prepare a few-shot example ---
+        try:
+            example_image_path = "examples/fiber_product.png"
+            example_image = Image.open(example_image_path)
+            example_tikz_code = r"""\documentclass{article}
+\usepackage{tikz-cd}
+\begin{center}
+\begin{tikzcd}
+T
+\arrow[drr, bend left, "x"]
+\arrow[ddr, bend right, "y"]
+\arrow[dr, dotted, "{(x,y)}" description] & & \\
+& X \times_Z Y \arrow[r, "p"] \arrow[d, "q"]
+& X \arrow[d, "f"] \\
+& Y \arrow[r, "g"]
+& Z
+\end{tikzcd}
+\end{center}
+\end{document}"""
 
-        return tikz_output
+            contents = [
+                {"role": "user", "parts": [
+                    "Here is a simple example diagram and the correct tikz-cd code to reproduce it. Please follow this style and syntax.",
+                    example_image
+                ]},
+                {"role": "model", "parts": [
+                    example_tikz_code
+                ]},
+                {"role": "user", "parts": [
+                    user_prompt_text,
+                    image
+                ]}
+            ]
+        except FileNotFoundError:
+            st.warning(f"Example image '{example_image_path}' not found. Using a standard prompt.")
+            contents = [{"role": "user", "parts": [user_prompt_text, image]}]
 
-    except Exception as e:
-        st.error(f"An error occurred during image processing or API call: {e}")
-        return None
 
 # --- Streamlit UI ---
 
