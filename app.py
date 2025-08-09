@@ -122,7 +122,7 @@ else:
     st.warning("Gemini API key not found in secrets. Please add it to your app's secrets.")
 
 # Use columns for a side-by-side layout
-col1, col2 = st.columns([1, 0.1, 1])
+col1, col2 = st.columns(2,gap="medium")
 
 with col1:
     uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
