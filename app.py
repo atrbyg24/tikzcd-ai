@@ -116,7 +116,7 @@ if uploaded_file is not None:
 
     # Display the uploaded image
     st.write("### Original Diagram")
-    st.image(pil_image, caption="Uploaded Image", use_column_width=True)
+    st.image(pil_image, caption="Uploaded Image", use_container_width=True)
 
     st.markdown("---")
 
