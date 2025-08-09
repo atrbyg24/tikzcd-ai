@@ -13,6 +13,10 @@ from collections import defaultdict
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+examples_dir = "examples"
+docs_dir = "docs"
+doc_path = os.path.join(docs_dir, "tikz-cd-doc.pdf")
+
 # --- RAG Implementation Functions ---
 def load_and_chunk_pdf(pdf_path):
     """Loads a PDF, extracts text, and chunks it into pages."""
