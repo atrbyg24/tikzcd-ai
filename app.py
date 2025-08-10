@@ -19,6 +19,7 @@ doc_path = os.path.join(docs_dir, "tikz-cd-doc.pdf")
 
 # --- RAG Implementation Functions ---
 def load_and_chunk_pdf(pdf_path):
+    print('load')
     """Loads a PDF, extracts text, and chunks it into pages."""
     text_chunks = []
     try:
@@ -37,6 +38,7 @@ def load_and_chunk_pdf(pdf_path):
     return text_chunks
 
 def create_vector_store(text_chunks):
+    print('vector')
     """Creates a simple in-memory vector store using TF-IDF."""
     if not text_chunks:
         return None, None
