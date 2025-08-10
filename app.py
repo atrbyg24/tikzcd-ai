@@ -19,7 +19,6 @@ doc_path = os.path.join(docs_dir, "tikz-cd-doc.pdf")
 
 # --- RAG Implementation Functions ---
 def load_and_chunk_pdf(pdf_path):
-    print('load')
     """Loads a PDF, extracts text, and chunks it into pages."""
     text_chunks = []
     try:
@@ -38,7 +37,6 @@ def load_and_chunk_pdf(pdf_path):
     return text_chunks
 
 def create_vector_store(text_chunks):
-    print('vector')
     """Creates a simple in-memory vector store using TF-IDF."""
     if not text_chunks:
         return None, None
@@ -48,18 +46,17 @@ def create_vector_store(text_chunks):
     return vectorizer, tfidf_matrix
 
 def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
-    # This check is a good one, but let's see what's happening.
-    print(f"Query received: '{query}'")
+    st.write(f"Query received: '{query}'")
 
     if not query or not query.strip() or not vectorizer or not tfidf_matrix:
-        print("Returning empty context due to invalid query.")
+        st.write("Returning empty context due to invalid query.")
         return ""
     
     try:
         query_vec = vectorizer.transform([query])
         
         # Add a print statement here to check the shape and content of the vectorized query.
-        print(f"Shape of query_vec: {query_vec.shape}")
+        st.write(f"Shape of query_vec: {query_vec.shape}")
         
         if query_vec.shape[1] == 0:
             print("Returning empty context because vectorized query has no features.")
@@ -67,7 +64,7 @@ def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
         
         # Add a print statement to see the similarity scores just before the potential crash.
         similarity_scores = cosine_similarity(query_vec, tfidf_matrix)
-        print(f"Similarity scores calculated: {similarity_scores}")
+        st.write(f"Similarity scores calculated: {similarity_scores}")
 
         # Get the indices of the top_k most similar chunks
         top_k_indices = similarity_scores.argsort()[0][-top_k:][::-1]
