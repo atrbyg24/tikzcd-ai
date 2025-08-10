@@ -12,6 +12,7 @@ import PyPDF2
 from collections import defaultdict
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import re
 
 examples_dir = "examples"
 docs_dir = "docs"
@@ -117,42 +118,46 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
         progress_bar.progress(10, text="1. Preprocessing image...")
 
         # --- Image Preprocessing and OCR (on the user's image) ---
-        open_cv_image = np.array(image.convert('RGB'))
-        open_cv_image = open_cv_image[:, :, ::-1].copy()
-        gray_image = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
-        
         try:
-            text_from_image = str(pytesseract.image_to_string(gray_image)).strip()
-        except Exception:
-            text_from_image = "" 
+            open_cv_image = np.array(image.convert('RGB'))
+            open_cv_image = open_cv_image[:, :, ::-1].copy()
+            gray_image = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
+            
+            _, binary_image = cv2.threshold(gray_image, 150, 255, cv2.THRESH_BINARY)
+            
+            text_from_image = pytesseract.image_to_string(binary_image, config='--psm 6').strip()
 
-        # --- Conditional RAG retrieval ---
-        # Only retrieve context if OCR returned valid text
+            text_from_image = re.sub(r'[^a-zA-Z0-9\s]+', '', text_from_image)
+            text_from_image = re.sub(r'\s+', ' ', text_from_image).strip()
+            
+            st.write(f"**OCR Output (after sanitization):** '{text_from_image}'")
+            st.write(f"**OCR Output Length:** {len(text_from_image)}")
+            
+        except Exception as e:
+            st.error(f"Error during OCR processing: {e}")
+            text_from_image = ""
+
+        # Use the OCR text to retrieve relevant documentation chunks
         progress_bar.progress(20, text="2. Retrieving context from documentation...")
-        retrieved_docs = ""
-        if text_from_image:
-            retrieved_docs = retrieve_context(text_from_image, vectorizer, tfidf_matrix, doc_chunks)
+        retrieved_docs = retrieve_context(text_from_image, vectorizer, tfidf_matrix, doc_chunks)
+        st.write(f"**Retrieved Docs (RAG):** '{retrieved_docs}'")
 
         progress_bar.progress(40, text="3. Building few-shot prompt...")
 
         # --- Prepare the multi-part prompt for the LLM ---
-        # Start with the RAG context
         prompt_parts = [
             f"You are an expert LaTeX typesetter specializing in commutative diagrams. You will use the following documentation to help you generate correct TikZ-cd code:\n\n---\n{retrieved_docs}\n---\n\nBelow are a few examples to guide your style and format. Please follow them for the subsequent image."
         ]
         
-        # Add all the few-shot examples to the prompt_parts list
         for example_image, example_tikz_code in examples:
             prompt_parts.append(example_image)
             prompt_parts.append(f"Here is the correct TikZ-cd LaTeX code for the above diagram:\n\n```latex\n{example_tikz_code}\n```\n\n")
 
-        # Add the final instruction and the user's image
         prompt_parts.append(f"Now, based on these examples, the provided documentation, and the OCR text from the new image below, generate the complete and correct TikZ-cd LaTeX code. The extracted text is: '{text_from_image}'\n\nEnsure the code is enclosed within a document class and includes the necessary packages. Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code. Double check to make sure the code compiles correctly. If you cannot infer the diagram, provide a basic 2x2 diagram as a default.")
         prompt_parts.append(image)
         
         progress_bar.progress(70, text="4. Calling Gemini API...")
 
-        # --- Call the Gemini API with the multi-part prompt ---
         tikz_output = call_gemini_api_for_tikz(api_key, prompt_parts)
         
         progress_bar.progress(100, text="Done!")
