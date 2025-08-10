@@ -46,19 +46,30 @@ def create_vector_store(text_chunks):
     return vectorizer, tfidf_matrix
 
 def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
-    """Retrieves top_k most relevant chunks based on a query."""
+    """
+    Retrieves top_k most relevant chunks based on a query.    
+    """
     if not query or not query.strip() or not vectorizer or not tfidf_matrix:
         return ""
+    
+    try:
+        query_vec = vectorizer.transform([query])
         
-    query_vec = vectorizer.transform([query])
-    similarity_scores = cosine_similarity(query_vec, tfidf_matrix)
+        # Check if the vectorized query has any features.
+        if query_vec.shape[1] == 0:
+            return ""
+        
+        similarity_scores = cosine_similarity(query_vec, tfidf_matrix)
+        
+        # Get the indices of the top_k most similar chunks
+        top_k_indices = similarity_scores.argsort()[0][-top_k:][::-1]
+        
+        retrieved_context = "\n\n".join([text_chunks[i] for i in top_k_indices])
+        return retrieved_context
+    except Exception as e:
+        st.warning(f"Failed to retrieve context for query: '{query}'. Error: {e}")
+        return ""
     
-    # Get the indices of the top_k most similar chunks
-    top_k_indices = similarity_scores.argsort()[0][-top_k:][::-1]
-    
-    retrieved_context = "\n\n".join([text_chunks[i] for i in top_k_indices])
-    return retrieved_context
-
 # --- Gemini API Call Function ---
 def call_gemini_api_for_tikz(api_key, content_list):
     """
