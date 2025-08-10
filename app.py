@@ -123,10 +123,6 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
             ocr_words = raw_ocr_text.split()
             filtered_words = [word for word in ocr_words if word.lower() in vectorizer_vocab]
             text_from_image = " ".join(filtered_words)
-
-            st.write(f"**Raw OCR Output:** '{raw_ocr_text}'")
-            st.write(f"**Filtered OCR Output (for RAG):** '{text_from_image}'")
-            st.write(f"**Filtered Output Length:** {len(text_from_image)}")
             
         except Exception as e:
             st.error(f"Error during OCR processing or filtering: {e}")
@@ -135,7 +131,6 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
         # Use the OCR text to retrieve relevant documentation chunks
         progress_bar.progress(20, text="2. Retrieving context from documentation...")
         retrieved_docs = retrieve_context(text_from_image, vectorizer, tfidf_matrix, doc_chunks)
-        st.write(f"**Retrieved Docs (RAG):** '{retrieved_docs}'")
 
         progress_bar.progress(40, text="3. Building few-shot prompt...")
 
