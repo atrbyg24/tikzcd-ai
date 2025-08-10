@@ -103,12 +103,13 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
         open_cv_image = np.array(image.convert('RGB'))
         open_cv_image = open_cv_image[:, :, ::-1].copy()
         gray_image = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
-        text_from_image = pytesseract.image_to_string(gray_image).strip()
-        
+        try:
+            text_from_image = str(pytesseract.image_to_string(gray_image)).strip()
+        except Exception:
+            text_from_image = ""       
         # Use the OCR text to retrieve relevant documentation chunks
         progress_bar.progress(20, text="2. Retrieving context from documentation...")
         retrieved_docs = ""
-        # FIX: Added a check to ensure text_from_image is not an empty string
         if text_from_image:
             retrieved_docs = retrieve_context(text_from_image, vectorizer, tfidf_matrix, doc_chunks)
 
