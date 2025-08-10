@@ -46,9 +46,9 @@ def create_vector_store(text_chunks):
 
 def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
     """Retrieves top_k most relevant chunks based on a query."""
-    if not vectorizer or not tfidf_matrix:
+    if not query or not vectorizer or not tfidf_matrix:
         return ""
-    
+        
     query_vec = vectorizer.transform([query])
     similarity_scores = cosine_similarity(query_vec, tfidf_matrix)
     
