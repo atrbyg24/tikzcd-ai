@@ -115,11 +115,14 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
         open_cv_image = np.array(image.convert('RGB'))
         open_cv_image = open_cv_image[:, :, ::-1].copy()
         gray_image = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
+        
         try:
             text_from_image = str(pytesseract.image_to_string(gray_image)).strip()
         except Exception:
-            text_from_image = ""       
-        # Use the OCR text to retrieve relevant documentation chunks
+            text_from_image = "" 
+            
+        # --- Conditional RAG retrieval ---
+        # Only retrieve context if OCR returned valid text
         progress_bar.progress(20, text="2. Retrieving context from documentation...")
         retrieved_docs = ""
         if text_from_image:
