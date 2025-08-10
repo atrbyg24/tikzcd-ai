@@ -59,7 +59,7 @@ def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
         # Add a print statement here to check the shape and content of the vectorized query.
         st.write(f"Shape of query_vec: {query_vec.shape}")
         
-        if query_vec.shape[1] == 0:
+        if query_vec.nnz == 0:
             print("Returning empty context because vectorized query has no features.")
             return ""
         
