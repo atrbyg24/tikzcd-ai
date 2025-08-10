@@ -47,7 +47,7 @@ def create_vector_store(text_chunks):
 
 def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
     """
-    Retrieves top_k most relevant chunks based on a query.    
+    Retrieves top_k most relevant chunks based on a query.
     """
     if not query or not query.strip() or not vectorizer or not tfidf_matrix:
         return ""
@@ -55,8 +55,7 @@ def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
     try:
         query_vec = vectorizer.transform([query])
         
-        # Check if the vectorized query has any features.
-        if query_vec.shape[1] == 0:
+        if query_vec.sum() == 0:
             return ""
         
         similarity_scores = cosine_similarity(query_vec, tfidf_matrix)
@@ -120,7 +119,7 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
             text_from_image = str(pytesseract.image_to_string(gray_image)).strip()
         except Exception:
             text_from_image = "" 
-            
+
         # --- Conditional RAG retrieval ---
         # Only retrieve context if OCR returned valid text
         progress_bar.progress(20, text="2. Retrieving context from documentation...")
