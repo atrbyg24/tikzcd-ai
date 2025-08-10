@@ -41,33 +41,25 @@ def create_vector_store(text_chunks):
     """Creates a simple in-memory vector store using TF-IDF."""
     if not text_chunks:
         return None, None
-    
     vectorizer = TfidfVectorizer(stop_words='english')
     tfidf_matrix = vectorizer.fit_transform(text_chunks)
     return vectorizer, tfidf_matrix
 
 def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
-    st.write(f"Query received: '{query}'")
-
+    """
+    Retrieves top_k most relevant chunks based on a query.
+    """
     if not query or not query.strip() or not vectorizer or not tfidf_matrix:
-        st.write("Returning empty context due to invalid query.")
         return ""
     
     try:
         query_vec = vectorizer.transform([query])
         
-        # Add a print statement here to check the shape and content of the vectorized query.
-        st.write(f"Shape of query_vec: {query_vec.shape}")
-        
         if query_vec.nnz == 0:
-            print("Returning empty context because vectorized query has no features.")
             return ""
         
-        # Add a print statement to see the similarity scores just before the potential crash.
         similarity_scores = cosine_similarity(query_vec, tfidf_matrix)
-        st.write(f"Similarity scores calculated: {similarity_scores}")
-
-        # Get the indices of the top_k most similar chunks
+        
         top_k_indices = similarity_scores.argsort()[0][-top_k:][::-1]
         
         retrieved_context = "\n\n".join([text_chunks[i] for i in top_k_indices])
@@ -75,7 +67,7 @@ def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
     except Exception as e:
         st.warning(f"Failed to retrieve context for query: '{query}'. Error: {e}")
         return ""
-    
+        
 # --- Gemini API Call Function ---
 def call_gemini_api_for_tikz(api_key, content_list):
     """
