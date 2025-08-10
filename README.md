@@ -52,5 +52,5 @@ your-project-name/
 ├── docs/  
 ├── examples/  
 ├── requirements.txt  
-└── your\_main\_script\_name.py
+└── app.py
 
