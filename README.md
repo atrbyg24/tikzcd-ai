@@ -54,3 +54,8 @@ your-project-name/
 ├── requirements.txt  
 └── app.py
 
+
+## **To-do**
+
+*In-app Latex rendering
+*Manually edit code
