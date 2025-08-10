@@ -40,13 +40,14 @@ def create_vector_store(text_chunks):
     """Creates a simple in-memory vector store using TF-IDF."""
     if not text_chunks:
         return None, None
+    
     vectorizer = TfidfVectorizer(stop_words='english')
     tfidf_matrix = vectorizer.fit_transform(text_chunks)
     return vectorizer, tfidf_matrix
 
 def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
     """Retrieves top_k most relevant chunks based on a query."""
-    if not query or not vectorizer or not tfidf_matrix:
+    if not query or not query.strip() or not vectorizer or not tfidf_matrix:
         return ""
         
     query_vec = vectorizer.transform([query])
