@@ -57,9 +57,9 @@ def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
         
         if query_vec.nnz == 0:
             return ""
-        
+        st.write(query_vec)
         similarity_scores = cosine_similarity(query_vec, tfidf_matrix)
-        
+        st.write(similarity_scores)
         top_k_indices = similarity_scores.argsort()[0][-top_k:][::-1]
         
         retrieved_context = "\n\n".join([text_chunks[i] for i in top_k_indices])
