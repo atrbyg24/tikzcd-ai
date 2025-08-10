@@ -54,10 +54,9 @@ def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
     
     try:
         query_vec = vectorizer.transform([query])
-        
+        st.write(query_vec)
         if query_vec.nnz == 0:
             return ""
-        st.write(query_vec)
         similarity_scores = cosine_similarity(query_vec, tfidf_matrix)
         st.write(similarity_scores)
         top_k_indices = similarity_scores.argsort()[0][-top_k:][::-1]
@@ -121,10 +120,7 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
 
             text_from_image = re.sub(r'[^a-zA-Z0-9\s]+', '', text_from_image)
             text_from_image = re.sub(r'\s+', ' ', text_from_image).strip()
-            
-            st.write(f"**OCR Output (after sanitization):** '{text_from_image}'")
-            st.write(f"**OCR Output Length:** {len(text_from_image)}")
-            
+                        
         except Exception as e:
             st.error(f"Error during OCR processing: {e}")
             text_from_image = ""
@@ -132,7 +128,6 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
         # Use the OCR text to retrieve relevant documentation chunks
         progress_bar.progress(20, text="2. Retrieving context from documentation...")
         retrieved_docs = retrieve_context(text_from_image, vectorizer, tfidf_matrix, doc_chunks)
-        st.write(f"**Retrieved Docs (RAG):** '{retrieved_docs}'")
 
         progress_bar.progress(40, text="3. Building few-shot prompt...")
 
