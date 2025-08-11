@@ -1,12 +1,11 @@
 # **Diagram to TikZ-cd Converter**
 
-This Streamlit web application converts an image of a commutative diagram into its corresponding **LaTeX code**. The application uses a sophisticated pipeline that combines a multi-modal large language model (LLM) with **few-shot prompting** and **Retrieval-Augmented Generation (RAG)** to accurately interpret diagrams and generate precise code.
+This Streamlit web application converts an image of a commutative diagram into its corresponding **LaTeX code**. The application uses a sophisticated pipeline that combines a multi-modal large language model (LLM) with **few-shot prompting** to accurately interpret diagrams and generate precise code.
 
 ## **✨ Features**
 
 * **Multi-modal AI:** Uses the **Gemini API** to understand both the visual layout of the diagram and the text within the image.  
 * **Few-Shot Prompting:** Provides the model with a few high-quality examples to establish a consistent and accurate output format.  
-* **Retrieval-Augmented Generation (RAG):** Implements a pipeline that searches a local knowledge base (the official tikz-cd documentation) for relevant context, augmenting the model's knowledge with accurate syntax and commands.  
 * **Optical Character Recognition (OCR):** Employs **pytesseract** and **OpenCV** to extract text labels from the diagram image, which is a critical step for the RAG search.  
 * **Streamlit GUI:** A user-friendly web interface for uploading images and viewing the generated code.
 
@@ -26,7 +25,7 @@ To run the application, you need:
    cd \<your-repo-name\>  
    pip install \-r requirements.txt
 
-   (You'll need a requirements.txt file with: streamlit, google-generativeai, opencv-python, pytesseract, Pillow, PyPDF2, scikit-learn.)  
+   (You'll need a requirements.txt file with: streamlit, google-generativeai, opencv-python, pytesseract, Pillow.)  
 2. Configure your environment:  
    Create a .streamlit/secrets.toml file with your Gemini API key:  
    \[secrets\]  

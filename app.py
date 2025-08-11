@@ -8,71 +8,14 @@ from google import genai
 from google.genai import types
 import os
 import time
-import PyPDF2
-from collections import defaultdict
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import re
 
 examples_dir = "examples"
-docs_dir = "docs"
-doc_path = os.path.join(docs_dir, "tikz-cd-doc.pdf")
-
-# --- RAG Implementation Functions ---
-def load_and_chunk_pdf(pdf_path):
-    """Loads a PDF, extracts text, and chunks it into pages."""
-    text_chunks = []
-    try:
-        with open(pdf_path, "rb") as file:
-            reader = PyPDF2.PdfReader(file)
-            for page in reader.pages:
-                text = page.extract_text()
-                if text:
-                    text_chunks.append(text)
-    except FileNotFoundError:
-        st.error(f"Documentation PDF not found at {pdf_path}. Please download it and place it in the '{docs_dir}' folder.")
-        return None
-    except Exception as e:
-        st.error(f"An error occurred while reading the PDF: {e}")
-        return None
-    return text_chunks
-
-def create_vector_store(text_chunks):
-    """Creates a simple in-memory vector store using TF-IDF."""
-    if not text_chunks:
-        return None, None
-    vectorizer = TfidfVectorizer(stop_words='english')
-    tfidf_matrix = vectorizer.fit_transform(text_chunks)
-    return vectorizer, tfidf_matrix
-
-def retrieve_context(query, vectorizer, tfidf_matrix, text_chunks, top_k=2):
-    """
-    Retrieves top_k most relevant chunks based on a query.
-    """
-    if not query or not query.strip() or not vectorizer or not tfidf_matrix:
-        return ""
-    
-    try:
-        query_vec = vectorizer.transform([query])
-        
-        if query_vec.nnz == 0:
-            return ""
-        
-        similarity_scores = cosine_similarity(query_vec, tfidf_matrix)
-        
-        top_k_indices = similarity_scores.argsort()[0][-top_k:][::-1]
-        
-        retrieved_context = "\n\n".join([text_chunks[i] for i in top_k_indices])
-        return retrieved_context
-    except Exception as e:
-        st.warning(f"Failed to retrieve context for query: '{query}'. Error: {e}")
-        return ""
 
 # --- Gemini API Call Function ---
 def call_gemini_api_for_tikz(api_key, content_list):
     """
     Makes a few-shot call to the Gemini API with the given content list
-    using the google-generativeai SDK.
+    using the google-genai SDK.
     """
     try:
         client = genai.Client(api_key=api_key)
@@ -92,20 +35,15 @@ def call_gemini_api_for_tikz(api_key, content_list):
 
 def generate_tikz_code(image, api_key, progress_bar, examples):
     """
-    This is the core function demonstrating the RAG pipeline.
-    It performs OCR, retrieves documentation, and then builds a
-    multi-part prompt with the example data and the user's image.
+    This is the core function demonstrating the few-shot pipeline.
+    It performs OCR and then builds a multi-part prompt with the
+    example data and the user's image.
     """
     if not api_key:
         st.error("Gemini API key is not set. Please add it to your Streamlit secrets.")
         return None
 
     try:
-        # Retrieve RAG components from session state
-        vectorizer = st.session_state.vectorizer
-        tfidf_matrix = st.session_state.tfidf_matrix
-        doc_chunks = st.session_state.doc_chunks
-
         # Update progress bar
         progress_bar.progress(10, text="1. Preprocessing image...")
 
@@ -117,36 +55,28 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
             
             _, binary_image = cv2.threshold(gray_image, 150, 255, cv2.THRESH_BINARY)
             
-            raw_ocr_text = pytesseract.image_to_string(binary_image, config='--psm 6').strip()
-
-            vectorizer_vocab = set(vectorizer.vocabulary_.keys())
-            ocr_words = raw_ocr_text.split()
-            filtered_words = [word for word in ocr_words if word.lower() in vectorizer_vocab]
-            text_from_image = " ".join(filtered_words)
+            # Use the OCR text to inform the prompt
+            text_from_image = pytesseract.image_to_string(binary_image, config='--psm 6').strip()
             
         except Exception as e:
-            st.error(f"Error during OCR processing or filtering: {e}")
+            st.error(f"Error during OCR processing: {e}")
             text_from_image = ""
 
-        # Use the OCR text to retrieve relevant documentation chunks
-        progress_bar.progress(20, text="2. Retrieving context from documentation...")
-        retrieved_docs = retrieve_context(text_from_image, vectorizer, tfidf_matrix, doc_chunks)
-
-        progress_bar.progress(40, text="3. Building few-shot prompt...")
+        progress_bar.progress(40, text="2. Building few-shot prompt...")
 
         # --- Prepare the multi-part prompt for the LLM ---
         prompt_parts = [
-            f"You are an expert LaTeX typesetter specializing in commutative diagrams. You will use the following documentation to help you generate correct TikZ-cd code:\n\n---\n{retrieved_docs}\n---\n\nBelow are a few examples to guide your style and format. Please follow them for the subsequent image."
+            f"You are an expert LaTeX typesetter specializing in commutative diagrams. Below are a few examples to guide your style and format. Please follow them for the subsequent image. The extracted text from the new image is: '{text_from_image}'"
         ]
         
         for example_image, example_tikz_code in examples:
             prompt_parts.append(example_image)
             prompt_parts.append(f"Here is the correct TikZ-cd LaTeX code for the above diagram:\n\n```latex\n{example_tikz_code}\n```\n\n")
 
-        prompt_parts.append(f"Now, based on these examples, the provided documentation, and the OCR text from the new image below, generate the complete and correct TikZ-cd LaTeX code. The extracted text is: '{text_from_image}'\n\nEnsure the code is enclosed within a document class and includes the necessary packages. Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code. Double check to make sure the code compiles correctly. If you cannot infer the diagram, provide a basic 2x2 diagram as a default.")
+        prompt_parts.append(f"Now, based on these examples, generate the complete and correct TikZ-cd LaTeX code for the new image below. Ensure the code is enclosed within a document class and includes the necessary packages. Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code. Pay close attention to the arrow styles (e.g., solid, dashed, double-headed) and the overall shape of the diagram (e.g., square, triangle, cube). Double check to make sure the code compiles correctly. If you cannot infer the diagram, provide a basic 2x2 diagram as a default.")
         prompt_parts.append(image)
         
-        progress_bar.progress(70, text="4. Calling Gemini API...")
+        progress_bar.progress(70, text="3. Calling Gemini API...")
 
         tikz_output = call_gemini_api_for_tikz(api_key, prompt_parts)
         
@@ -161,7 +91,7 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
 # --- Streamlit UI ---
 st.set_page_config(page_title="Diagram to TikZ-cd Converter", layout="centered")
 st.title("Diagram to TikZ-cd Converter")
-st.markdown("Upload an image of a commutative diagram and get the LaTeX code, powered by the Gemini API with few-shot prompting and RAG.")
+st.markdown("Upload an image of a commutative diagram and get the LaTeX code, powered by the Gemini API with few-shot prompting.")
 
 # Retrieve the API key from Streamlit secrets
 if 'GEMINI_API_KEY' in st.secrets:
