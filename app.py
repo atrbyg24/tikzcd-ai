@@ -24,7 +24,7 @@ def call_gemini_api_for_tikz(api_key, content_list):
             model="gemini-2.5-flash",
             contents=content_list,
             config=types.GenerateContentConfig(thinking_config=types.ThinkingConfig(thinking_budget=-1) # Dynamic thinking,
-            ),
+``            ),
         )
         
         return response.text
