@@ -130,29 +130,21 @@ with col1:
     if uploaded_file is not None:
         image_bytes = io.BytesIO(uploaded_file.getvalue())
         pil_image = Image.open(image_bytes)
-
         st.write("### Original Diagram")
         st.image(pil_image, caption="Uploaded Image", use_container_width=True)
         
+        # When the button is clicked, this block will execute
         if st.button("Generate TikZ Code"):
-            st.session_state.show_output = True
-            st.session_state.tikz_output = None
-            st.session_state.pil_image = pil_image
+            progress_bar = st.progress(0, text="Starting...")
+            tikz_output = generate_tikz_code(pil_image, api_key, progress_bar, examples)
+            progress_bar.empty()
+            if tikz_output:
+                st.session_state.tikz_output = tikz_output
+            else:
+                st.session_state.tikz_output = None
 
 with col2:
-    if 'show_output' in st.session_state and st.session_state.show_output and uploaded_file is not None:
-        if 'tikz_output' not in st.session_state or st.session_state.tikz_output is None:
-            progress_bar = st.progress(0, text="Starting...")
-            st.session_state.tikz_output = generate_tikz_code(
-                st.session_state.pil_image,
-                api_key,
-                progress_bar,
-                examples
-            )
-            time.sleep(1)
-            progress_bar.empty()
-
-        if st.session_state.tikz_output is not None:
-            st.write("### Generation Complete!")
-            st.write("#### Generated TikZ-cd Code")
-            st.code(st.session_state.tikz_output, language='latex')
+    if 'tikz_output' in st.session_state and st.session_state.tikz_output is not None:
+        st.write("### Generation Complete!")
+        st.write("#### Generated TikZ-cd Code")
+        st.code(st.session_state.tikz_output, language='latex')
