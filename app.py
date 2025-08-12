@@ -33,15 +33,26 @@ def call_gemini_api_for_tikz(api_key, content_list):
         st.error(f"An API error occurred: {e}")
         return None
 
+def build_few_shot_prompt(text_from_image, image, examples):
+    """Builds the multi-part prompt for the Gemini API."""
+    prompt_parts = [
+        f"You are an expert LaTeX typesetter specializing in commutative diagrams. Below are a few examples to guide your style and format. Please follow them for the subsequent image. The extracted text from the new image is: '{text_from_image}'"
+    ]
+    
+    for example_image, example_tikz_code in examples:
+        prompt_parts.append(example_image)
+        prompt_parts.append(f"Here is the correct TikZ-cd LaTeX code for the above diagram:\n\n```latex\n{example_tikz_code}\n```\n\n")
+
+    prompt_parts.append(f"Now, based on these examples, generate the complete and correct TikZ-cd LaTeX code for the new image below. Ensure the code is enclosed within a document class and includes the necessary packages. Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code. Pay close attention to the arrow styles (e.g., solid, dashed, double-headed) and the overall shape of the diagram (e.g., square, triangle, cube). Double check to make sure the code compiles correctly. If you cannot infer the diagram, provide a basic 2x2 diagram as a default.")
+    prompt_parts.append(image)
+    return prompt_parts
+
 def generate_tikz_code(image, api_key, progress_bar, examples):
     """
     This is the core function demonstrating the few-shot pipeline.
     It performs OCR and then builds a multi-part prompt with the
     example data and the user's image.
     """
-    if not api_key:
-        st.error("Gemini API key is not set. Please add it to your Streamlit secrets.")
-        return None
 
     try:
         # Update progress bar
@@ -63,18 +74,7 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
             text_from_image = ""
 
         progress_bar.progress(40, text="2. Building few-shot prompt...")
-
-        # --- Prepare the multi-part prompt for the LLM ---
-        prompt_parts = [
-            f"You are an expert LaTeX typesetter specializing in commutative diagrams. Below are a few examples to guide your style and format. Please follow them for the subsequent image. The extracted text from the new image is: '{text_from_image}'"
-        ]
-        
-        for example_image, example_tikz_code in examples:
-            prompt_parts.append(example_image)
-            prompt_parts.append(f"Here is the correct TikZ-cd LaTeX code for the above diagram:\n\n```latex\n{example_tikz_code}\n```\n\n")
-
-        prompt_parts.append(f"Now, based on these examples, generate the complete and correct TikZ-cd LaTeX code for the new image below. Ensure the code is enclosed within a document class and includes the necessary packages. Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code. Pay close attention to the arrow styles (e.g., solid, dashed, double-headed) and the overall shape of the diagram (e.g., square, triangle, cube). Double check to make sure the code compiles correctly. If you cannot infer the diagram, provide a basic 2x2 diagram as a default.")
-        prompt_parts.append(image)
+        prompt_parts = build_few_shot_prompt(text_from_image, image, examples)
         
         progress_bar.progress(70, text="3. Calling Gemini API...")
 
@@ -119,16 +119,6 @@ except FileNotFoundError:
     st.error(f"One or more few-shot example files not found in the '{examples_dir}' folder. Please ensure all files for {example_names} are there.")
     st.stop()
 
-
-# Load RAG components once at the start and store in session state
-if 'vectorizer' not in st.session_state:
-    doc_chunks = load_and_chunk_pdf(doc_path)
-    if doc_chunks:
-        vectorizer, tfidf_matrix = create_vector_store(doc_chunks)
-        st.session_state.vectorizer = vectorizer
-        st.session_state.tfidf_matrix = tfidf_matrix
-        st.session_state.doc_chunks = doc_chunks
-
 col1, col2 = st.columns(2,gap="large")
 
 with col1:
@@ -149,7 +139,6 @@ with col2:
     if 'show_output' in st.session_state and st.session_state.show_output and uploaded_file is not None:
         if 'tikz_output' not in st.session_state or st.session_state.tikz_output is None:
             progress_bar = st.progress(0, text="Starting...")
-            # The function call no longer needs the RAG arguments
             st.session_state.tikz_output = generate_tikz_code(
                 st.session_state.pil_image,
                 api_key,
