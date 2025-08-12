@@ -1,5 +1,5 @@
 {
-  "name": "streamlit-tikz-cd-renderer",
+  "name": "streamlit-latex-renderer",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
