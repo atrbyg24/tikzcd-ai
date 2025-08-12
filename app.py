@@ -88,6 +88,22 @@ def generate_tikz_code(image, api_key, progress_bar, examples):
         st.error(f"An error occurred during image processing or API call: {e}")
         return None, None
 
+@st.cache_data
+def load_examples(example_names, examples_dir):
+    examples = []
+    try:
+        for name in example_names:
+            image_path = os.path.join(examples_dir, f"{name}.png")
+            tikz_path = os.path.join(examples_dir, f"{name}.txt")
+            example_image = Image.open(image_path)
+            with open(tikz_path, "r") as f:
+                example_tikz_code = f.read()
+            examples.append((example_image, example_tikz_code))
+        return examples
+    except FileNotFoundError:
+        st.error(f"One or more few-shot example files not found in the '{examples_dir}' folder. Please ensure all files for {example_names} are there.")
+        st.stop()
+
 # --- Streamlit UI ---
 st.set_page_config(page_title="Diagram to TikZ-cd Converter", layout="centered")
 st.title("Diagram to TikZ-cd Converter")
@@ -102,22 +118,10 @@ else:
     st.warning("Gemini API key not found in secrets. Please add it to your app's secrets.")
     st.stop()
 
-# Define the names of the few-shot examples to use
+#Define the examples to use for few-shot prompting
+examples_dir = "examples"
 example_names = ['fiber_product', 'snake', 'cube']
-examples = []
-# Load the few-shot example data once
-try:
-    examples_dir = "examples"
-    for name in example_names:
-        image_path = os.path.join(examples_dir, f"{name}.png")
-        tikz_path = os.path.join(examples_dir, f"{name}.txt")
-        example_image = Image.open(image_path)
-        with open(tikz_path, "r") as f:
-            example_tikz_code = f.read()
-        examples.append((example_image, example_tikz_code))
-except FileNotFoundError:
-    st.error(f"One or more few-shot example files not found in the '{examples_dir}' folder. Please ensure all files for {example_names} are there.")
-    st.stop()
+examples = load_examples(example_names, examples_dir)
 
 col1, col2 = st.columns(2,gap="large")
 
