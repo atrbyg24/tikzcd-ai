@@ -100,6 +100,7 @@ if 'GEMINI_API_KEY' in st.secrets:
 else:
     api_key = None
     st.warning("Gemini API key not found in secrets. Please add it to your app's secrets.")
+    st.stop()
 
 # Define the names of the few-shot examples to use
 example_names = ['fiber_product', 'snake', 'cube']
