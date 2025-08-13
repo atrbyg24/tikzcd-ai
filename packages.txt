@@ -1,2 +1,6 @@
 tesseract-ocr
 libgl1-mesa-glx
+texlive-latex-base
+texlive-latex-recommended
+texlive-fonts-recommended
+poppler-utils
