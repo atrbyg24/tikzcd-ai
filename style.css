@@ -1,52 +1,67 @@
-    .main-header {
-        font-family: 'Helvetica Neue', sans-serif;
-        font-weight: 700;
-        text-align: center;
-        color: #333333;
-        margin-bottom: 0;
-    }
-    .main-subheader {
-        font-family: 'Helvetica Neue', sans-serif;
-        text-align: center;
-        color: #555555;
-        margin-top: 0;
-    }
-    .stApp {
-        background-color: #f9f9f9;
-    }
-    .custom-container {
-        border-radius: 12px;
-        padding: 20px;
-        background-color: white;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-        margin-bottom: 20px;
-    }
-    .stButton > button {
-        width: 100%;
-        border-radius: 8px;
-        border: none;
-        background-color: #5a82e8;
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
-        padding: 12px;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        background-color: #4a72d8;
-        transform: translateY(-2px);
-    }
-    .stButton > button:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-    }
-    .css-15tx9k2 { /* This targets the markdown header */
-        font-size: 1.25rem;
-        font-weight: 600;
-    }
-    .streamlit-expanderHeader {
-        background-color: #e6e6e6;
-        border-radius: 8px;
-        padding: 10px;
-        font-weight: bold;
-    }
+.main-header {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 700;
+    text-align: center;
+    color: #333333;
+    margin-bottom: 0;
+}
+
+.main-subheader {
+    font-family: 'Helvetica Neue', sans-serif;
+    text-align: center;
+    color: #555555;
+    margin-top: 0;
+}
+
+.stApp {
+    background-color: #f5f5f5; 
+    color: #333333; 
+}
+
+.custom-container {
+    border-radius: 12px;
+    padding: 20px;
+    background-color: white; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+}
+
+.stButton > button {
+    display: block;
+    max-width: 300px;
+    margin: 0 auto;
+    
+    width: 100%;
+    border-radius: 8px;
+    border: none;
+    background-color: #008cba; 
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px;
+    transition: all 0.3s ease;
+}
+
+.stButton > button:hover {
+    background-color: #00739e;
+    transform: translateY(-2px);
+}
+
+.stButton > button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.css-15tx9k2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333333; 
+}
+
+.streamlit-expanderHeader {
+    background-color: #e6e6e6;
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: bold;
+    color: #333333;
+}
