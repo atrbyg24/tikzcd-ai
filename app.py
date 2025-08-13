@@ -7,9 +7,6 @@ import io
 from google import genai
 from google.genai import types
 import os
-import tempfile
-import subprocess
-import glob
 
 examples_dir = "examples"
 
@@ -33,96 +30,6 @@ def call_gemini_api_for_tikz(api_key, content_list):
 
     except Exception as e:
         st.error(f"An API error occurred: {e}")
-        return None
-
-def render_latex(latex_code):
-    """
-    Renders a LaTeX string containing a TikZ-cd diagram into a PNG image.
-
-    Args:
-        latex_code (str): The LaTeX code to render.
-
-    Returns:
-        PIL.Image.Image or None: The rendered image as a PIL Image object,
-                                 or None if rendering fails.
-    """
-    if not latex_code:
-        return None
-        
-    lines = latex_code.strip().split('\n')
-    if lines and lines[0].strip() == '```latex' and lines[-1].strip() == '```':
-        clean_latex_code = '\n'.join(lines[1:-1])
-    else:
-        clean_latex_code = latex_code
-
-    try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tex_path = os.path.join(tmpdir, "diagram.tex")
-            with open(tex_path, "w") as f:
-                f.write(clean_latex_code)
-
-            st.subheader("LaTeX code being compiled:")
-            st.code(clean_latex_code, language='latex')
-
-            try:
-                process = subprocess.run(
-                    ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
-                    check=False, # We'll check the exit code manually
-                    capture_output=True,
-                    text=True,
-                    timeout=20
-                )
-                
-                # Check for an error. The returncode is non-zero on failure.
-                if process.returncode != 0:
-                    st.error("LaTeX compilation failed.")
-                    st.subheader("pdflatex Error Output (stderr):")
-                    st.text(process.stderr)
-                    # Try to find the .log file and display its full content
-                    log_path = os.path.join(tmpdir, "diagram.log")
-                    if os.path.exists(log_path):
-                        with open(log_path, "r") as log_file:
-                            st.subheader("Full LaTeX Log File:")
-                            st.text(log_file.read()) # Read the entire log file
-                    return None
-
-            except subprocess.TimeoutExpired:
-                st.error("LaTeX compilation timed out.")
-                return None
-            # --- END MODIFIED ---
-
-            # Check if the PDF file was actually created before proceeding
-            pdf_path = os.path.join(tmpdir, "diagram.pdf")
-            if not os.path.exists(pdf_path):
-                st.error("pdflatex completed but did not produce a PDF file.")
-                # This could happen if the compilation failed on a non-critical error that
-                # didn't trigger a non-zero exit code, but was still fatal for the output.
-                return None
-
-            # --- Convert the PDF to a PNG image ---
-            png_output_base = os.path.join(tmpdir, "diagram-img")
-            try:
-                subprocess.run(
-                    ["pdftoppm", "-png", "-singlefile", pdf_path, png_output_base],
-                    check=True,
-                    capture_output=True,
-                    text=True
-                )
-            except subprocess.CalledProcessError as e:
-                st.error(f"PDF to PNG conversion failed. Error:\n{e.stderr}")
-                return None
-
-            # --- Use glob to find the generated PNG file ---
-            png_files = glob.glob(f"{png_output_base}*.png")
-            if png_files:
-                final_png_path = png_files[0]
-                return Image.open(final_png_path)
-            else:
-                st.error("Could not find the generated PNG file after conversion.")
-                return None
-
-    except Exception as e:
-        st.error(f"An unexpected error occurred during rendering: {e}")
         return None
 
 def build_few_shot_prompt(text_from_image, image, examples):
@@ -217,7 +124,7 @@ examples = load_examples(example_names, examples_dir)
 
 # --- Main App Layout ---
 # Use columns for a cleaner layout
-col1, col2, col3 = st.columns([2, 2, 2], gap="large")
+col1, col2 = st.columns([2, 2], gap="large")
 
 with col1:
     st.write("### 1. Upload Diagram")
@@ -236,7 +143,6 @@ with col1:
         # Store the uploaded image in the session state
         st.session_state.uploaded_image = pil_image
 
-# This button is now in the first column but controls the flow for all columns
 if st.button("Generate TikZ Code", disabled=(st.session_state.get('uploaded_image') is None)):
     if 'uploaded_image' in st.session_state:
         pil_image = st.session_state.uploaded_image
@@ -261,10 +167,3 @@ with col2:
         st.code(st.session_state.tikz_output, language='latex')
     else:
         st.info("The generated LaTeX code will appear here.")
-
-with col3:
-    st.write("### 3. Rendered Diagram")
-    if 'rendered_image' in st.session_state and st.session_state.rendered_image:
-        st.image(st.session_state.rendered_image, caption="Rendered Diagram", use_container_width=True)
-    else:
-        st.info("The rendered diagram will appear here.")
