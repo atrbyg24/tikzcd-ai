@@ -43,7 +43,7 @@ def build_few_shot_prompt(text_from_image, image, examples):
         prompt_parts.append(example_image)
         prompt_parts.append(f"Here is the correct TikZ-cd LaTeX code for the above diagram:\n\n```latex\n{example_tikz_code}\n```\n\n")
 
-    prompt_parts.append(f"Now, based on these examples, generate the complete and correct TikZ-cd LaTeX code for the new image below. Ensure the code is enclosed within a document class and includes the necessary packages. Make sure the diagram is centered. Do not add any extra explanations or text, just the full LaTeX code. Pay close attention to the arrow styles (e.g., solid, dashed, double-headed) and the overall shape of the diagram (e.g., square, triangle, cube). Double check to make sure the code compiles correctly. If you cannot infer the diagram, provide a basic 2x2 diagram as a default.")
+    prompt_parts.append(f"Based on these examples, generate the complete and correct TikZ-cd LaTeX code for the new image below. Ensure the code is enclosed within a document class and includes the necessary packages. Do not add any extra explanations or text, just the full LaTeX code. Pay close attention to the arrow styles (e.g., solid, dashed, double-headed) and the overall shape of the diagram (e.g., square, triangle, cube). Check to make sure the code compiles correctly.")
     prompt_parts.append(image)
     return prompt_parts
 

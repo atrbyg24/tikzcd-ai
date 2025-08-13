@@ -4,11 +4,9 @@
 
 \begin{document}
 
-\begin{center}
 \begin{tikzcd}
 A \arrow[r] \arrow[d] & B \\
 C \arrow[r] & D \arrow[u]
 \end{tikzcd}
-\end{center}
 
 \end{document}

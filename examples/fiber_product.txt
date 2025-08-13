@@ -5,7 +5,6 @@
 
 \begin{document}
 
-\begin{center}
 \begin{tikzcd}
 T
 \arrow[drr, bend left, "x"]
@@ -16,6 +15,5 @@ T
 & Y \arrow[r, "g"]
 & Z
 \end{tikzcd}
-\end{center}
 
 \end{document}
