@@ -8,6 +8,8 @@ from google import genai
 from google.genai import types
 import os
 import time
+import tempfile
+import subprocess
 
 examples_dir = "examples"
 
@@ -30,6 +32,77 @@ def call_gemini_api_for_tikz(api_key, content_list):
 
     except Exception as e:
         st.error(f"An API error occurred: {e}")
+        return None
+
+def render_latex(latex_code):
+    """
+    Renders a LaTeX string containing a TikZ-cd diagram into a PNG image.
+
+    Args:
+        latex_code (str): The LaTeX code to render.
+
+    Returns:
+        PIL.Image.Image or None: The rendered image as a PIL Image object,
+                                 or None if rendering fails.
+    """
+    if not latex_code:
+        return None
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a .tex file
+            tex_path = os.path.join(tmpdir, "diagram.tex")
+            with open(tex_path, "w") as f:
+                f.write(latex_code)
+
+            # Compile the LaTeX file to PDF
+            try:
+                process = subprocess.run(
+                    ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=20  # Add a timeout to prevent long-running compilations
+                )
+            except subprocess.CalledProcessError as e:
+                st.error("LaTeX compilation failed.")
+                # Try to find the .log file and display its content for debugging
+                log_path = os.path.join(tmpdir, "diagram.log")
+                if os.path.exists(log_path):
+                    with open(log_path, "r") as log_file:
+                        st.text(f"LaTeX Log File:\n{log_file.read(2000)}") # Show first 2000 chars
+                return None
+            except subprocess.TimeoutExpired:
+                st.error("LaTeX compilation timed out.")
+                return None
+
+
+            # Convert the PDF to a PNG image
+            pdf_path = os.path.join(tmpdir, "diagram.pdf")
+
+            # Use a more specific name for the output image to avoid clashes
+            png_output_base = os.path.join(tmpdir, "diagram-img")
+
+            try:
+                subprocess.run(
+                    ["pdftoppm", "-png", "-singlefile", pdf_path, png_output_base],
+                    check=True,
+                    capture_output=True,
+                    text=True
+                )
+            except subprocess.CalledProcessError as e:
+                st.error(f"PDF to PNG conversion failed. Error:\n{e.stderr}")
+                return None
+
+            # Open and return the image
+            final_png_path = f"{png_output_base}.png"
+            if os.path.exists(final_png_path):
+                return Image.open(final_png_path)
+            else:
+                st.error("Could not find the generated PNG file after conversion.")
+                return None
+
+    except Exception as e:
+        st.error(f"An unexpected error occurred during rendering: {e}")
         return None
 
 def build_few_shot_prompt(text_from_image, image, examples):
@@ -122,28 +195,56 @@ examples_dir = "examples"
 example_names = ['fiber_product', 'snake', 'cube']
 examples = load_examples(example_names, examples_dir)
 
-col1, col2 = st.columns(2,gap="large")
+# --- Main App Layout ---
+# Use columns for a cleaner layout
+col1, col2, col3 = st.columns([2, 2, 2], gap="large")
 
 with col1:
-    uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
+    st.write("### 1. Upload Diagram")
+    uploaded_file = st.file_uploader(
+        "Choose an image of a commutative diagram...",
+        type=["png", "jpg", "jpeg"]
+    )
+
     if uploaded_file is not None:
+        # To read file as bytes:
         image_bytes = io.BytesIO(uploaded_file.getvalue())
         pil_image = Image.open(image_bytes)
-        st.write("### Original Diagram")
-        st.image(pil_image, caption="Uploaded Image", use_container_width=True)
         
-        # When the button is clicked, this block will execute
-        if st.button("Generate TikZ Code"):
-            progress_bar = st.progress(0, text="Starting...")
-            tikz_output = generate_tikz_code(pil_image, api_key, progress_bar, examples)
-            progress_bar.empty()
-            if tikz_output:
-                st.session_state.tikz_output = tikz_output
-            else:
-                st.session_state.tikz_output = None
+        st.image(pil_image, caption="Uploaded Diagram", use_container_width=True)
+
+        # Store the uploaded image in the session state
+        st.session_state.uploaded_image = pil_image
+
+# This button is now in the first column but controls the flow for all columns
+if st.button("Generate TikZ Code", disabled=(st.session_state.get('uploaded_image') is None)):
+    if 'uploaded_image' in st.session_state:
+        pil_image = st.session_state.uploaded_image
+        progress_bar = st.progress(0, text="Starting...")
+
+        # Generate the TikZ code
+        tikz_output = generate_tikz_code(pil_image, api_key, progress_bar, examples)
+
+        if tikz_output:
+            st.session_state.tikz_output = tikz_output
+            # Render the LaTeX code to an image
+            st.session_state.rendered_image = render_latex(tikz_output)
+        else:
+            st.session_state.tikz_output = None
+            st.session_state.rendered_image = None
+
+        progress_bar.empty()
 
 with col2:
-    if 'tikz_output' in st.session_state and st.session_state.tikz_output is not None:
-        st.write("### Generation Complete!")
-        st.write("#### Generated TikZ-cd Code")
+    st.write("### 2. Generated Code")
+    if 'tikz_output' in st.session_state and st.session_state.tikz_output:
         st.code(st.session_state.tikz_output, language='latex')
+    else:
+        st.info("The generated LaTeX code will appear here.")
+
+with col3:
+    st.write("### 3. Rendered Diagram")
+    if 'rendered_image' in st.session_state and st.session_state.rendered_image:
+        st.image(st.session_state.rendered_image, caption="Rendered Diagram", use_container_width=True)
+    else:
+        st.info("The rendered diagram will appear here.")
