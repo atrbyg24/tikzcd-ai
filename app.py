@@ -64,11 +64,14 @@ def render_latex(latex_code):
                 )
             except subprocess.CalledProcessError as e:
                 st.error("LaTeX compilation failed.")
+                st.subheader("pdflatex Error Output (stderr):")
+                st.text(e.stderr)
                 # Try to find the .log file and display its content for debugging
                 log_path = os.path.join(tmpdir, "diagram.log")
                 if os.path.exists(log_path):
                     with open(log_path, "r") as log_file:
-                        st.text(f"LaTeX Log File:\n{log_file.read(2000)}") # Show first 2000 chars
+                        st.subheader("Full LaTeX Log File:")
+                        st.text(log_file.read(2000)) # Show first 2000 chars
                 return None
             except subprocess.TimeoutExpired:
                 st.error("LaTeX compilation timed out.")
