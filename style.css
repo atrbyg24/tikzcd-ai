@@ -2,30 +2,30 @@
         font-family: 'Helvetica Neue', sans-serif;
         font-weight: 700;
         text-align: center;
-        color: #1a1a1a;
+        color: #333333;
         margin-bottom: 0;
     }
     .main-subheader {
         font-family: 'Helvetica Neue', sans-serif;
         text-align: center;
-        color: #6e6e6e;
+        color: #555555;
         margin-top: 0;
     }
     .stApp {
-        background-color: #f0f2f6;
+        background-color: #f9f9f9;
     }
     .custom-container {
         border-radius: 12px;
         padding: 20px;
         background-color: white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
         margin-bottom: 20px;
     }
     .stButton > button {
         width: 100%;
         border-radius: 8px;
         border: none;
-        background-color: #4CAF50;
+        background-color: #5a82e8;
         color: white;
         font-size: 16px;
         font-weight: bold;
@@ -33,14 +33,14 @@
         transition: all 0.3s ease;
     }
     .stButton > button:hover {
-        background-color: #45a049;
+        background-color: #4a72d8;
         transform: translateY(-2px);
     }
     .stButton > button:disabled {
         background-color: #cccccc;
         cursor: not-allowed;
     }
-    .css-15tx9k2 { 
+    .css-15tx9k2 { /* This targets the markdown header */
         font-size: 1.25rem;
         font-weight: 600;
     }
