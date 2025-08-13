@@ -57,7 +57,7 @@ def render_latex(latex_code):
             # Compile the LaTeX file to PDF
             try:
                 process = subprocess.run(
-                    ["/usr/bin/pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
+                    ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
                     check=True,
                     capture_output=True,
                     text=True,
@@ -78,13 +78,11 @@ def render_latex(latex_code):
 
             # Convert the PDF to a PNG image
             pdf_path = os.path.join(tmpdir, "diagram.pdf")
-
-            # Use a more specific name for the output image to avoid clashes
             png_output_base = os.path.join(tmpdir, "diagram-img")
 
             try:
                 subprocess.run(
-                    ["/usr/bin/pdftoppm", "-png", "-singlefile", pdf_path, png_output_base],
+                    ["pdftoppm", "-png", "-singlefile", pdf_path, png_output_base],
                     check=True,
                     capture_output=True,
                     text=True
