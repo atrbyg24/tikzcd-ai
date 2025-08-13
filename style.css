@@ -51,35 +51,10 @@
     cursor: not-allowed;
 }
 
-.css-15tx9k2 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #212121;
-}
-
 .streamlit-expanderHeader {
     background-color: #e6e6e6;
     border-radius: 8px;
     padding: 10px;
     font-weight: bold;
     color: #212121;
-}
-
-/* Style for the "Browse files" button */
-[data-testid="stFileUploader"] label {
-    background-color: #008cba;
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
-
-[data-testid="stFileUploader"] label:hover {
-    background-color: #00739e;
-    cursor: pointer;
-}
-
-p {
-  color: #212121 !important;
 }
