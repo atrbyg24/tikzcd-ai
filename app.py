@@ -103,8 +103,13 @@ def load_examples(example_names, examples_dir):
         st.error(f"One or more few-shot example files not found in the '{examples_dir}' folder. Please ensure all files for {example_names} are there.")
         st.stop()
 
+def load_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
 # --- Streamlit UI ---
 st.set_page_config(page_title="Diagram to TikZ-cd Converter", layout="centered")
+load_css("style.css")
 st.title("Diagram to TikZ-cd Converter")
 st.markdown("Upload an image of a commutative diagram and get the LaTeX code, powered by the Gemini API with few-shot prompting.")
 

@@ -1,0 +1,52 @@
+    .main-header {
+        font-family: 'Helvetica Neue', sans-serif;
+        font-weight: 700;
+        text-align: center;
+        color: #1a1a1a;
+        margin-bottom: 0;
+    }
+    .main-subheader {
+        font-family: 'Helvetica Neue', sans-serif;
+        text-align: center;
+        color: #6e6e6e;
+        margin-top: 0;
+    }
+    .stApp {
+        background-color: #f0f2f6;
+    }
+    .custom-container {
+        border-radius: 12px;
+        padding: 20px;
+        background-color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+    .stButton > button {
+        width: 100%;
+        border-radius: 8px;
+        border: none;
+        background-color: #4CAF50;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        padding: 12px;
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        background-color: #45a049;
+        transform: translateY(-2px);
+    }
+    .stButton > button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    .css-15tx9k2 { 
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    .streamlit-expanderHeader {
+        background-color: #e6e6e6;
+        border-radius: 8px;
+        padding: 10px;
+        font-weight: bold;
+    }
