@@ -27,11 +27,9 @@
 }
 
 .stButton > button:hover {
-    background-color: #00739e;
     transform: translateY(-2px);
 }
 
 .stButton > button:disabled {
-    background-color: #cccccc;
     cursor: not-allowed;
 }
