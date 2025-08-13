@@ -7,9 +7,9 @@ import io
 from google import genai
 from google.genai import types
 import os
-import time
 import tempfile
 import subprocess
+import glob
 
 examples_dir = "examples"
 
@@ -37,13 +37,6 @@ def call_gemini_api_for_tikz(api_key, content_list):
 def render_latex(latex_code):
     """
     Renders a LaTeX string containing a TikZ-cd diagram into a PNG image.
-
-    Args:
-        latex_code (str): The LaTeX code to render.
-
-    Returns:
-        PIL.Image.Image or None: The rendered image as a PIL Image object,
-                                 or None if rendering fails.
     """
     if not latex_code:
         return None
@@ -98,12 +91,14 @@ def render_latex(latex_code):
                 return None
 
             # Open and return the image
-            final_png_path = f"{png_output_base}.png"
-            if os.path.exists(final_png_path):
+            png_files = glob.glob(f"{png_output_base}*.png")
+            if png_files:
+                final_png_path = png_files[0]
                 return Image.open(final_png_path)
             else:
                 st.error("Could not find the generated PNG file after conversion.")
                 return None
+
 
     except Exception as e:
         st.error(f"An unexpected error occurred during rendering: {e}")
