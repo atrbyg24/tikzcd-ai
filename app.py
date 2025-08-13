@@ -37,51 +37,69 @@ def call_gemini_api_for_tikz(api_key, content_list):
 def render_latex(latex_code):
     """
     Renders a LaTeX string containing a TikZ-cd diagram into a PNG image.
+
+    Args:
+        latex_code (str): The LaTeX code to render.
+
+    Returns:
+        PIL.Image.Image or None: The rendered image as a PIL Image object,
+                                 or None if rendering fails.
     """
     if not latex_code:
         return None
-    
+        
     lines = latex_code.strip().split('\n')
     if lines and lines[0].strip() == '```latex' and lines[-1].strip() == '```':
         clean_latex_code = '\n'.join(lines[1:-1])
     else:
         clean_latex_code = latex_code
+
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Create a .tex file
             tex_path = os.path.join(tmpdir, "diagram.tex")
             with open(tex_path, "w") as f:
                 f.write(clean_latex_code)
 
-            # Compile the LaTeX file to PDF
+            st.subheader("LaTeX code being compiled:")
+            st.code(clean_latex_code, language='latex')
+
             try:
                 process = subprocess.run(
                     ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
-                    check=True,
+                    check=False, # We'll check the exit code manually
                     capture_output=True,
                     text=True,
-                    timeout=20  # Add a timeout to prevent long-running compilations
+                    timeout=20
                 )
-            except subprocess.CalledProcessError as e:
-                st.error("LaTeX compilation failed.")
-                st.subheader("pdflatex Error Output (stderr):")
-                st.text(e.stderr)
-                # Try to find the .log file and display its content for debugging
-                log_path = os.path.join(tmpdir, "diagram.log")
-                if os.path.exists(log_path):
-                    with open(log_path, "r") as log_file:
-                        st.subheader("Full LaTeX Log File:")
-                        st.text(log_file.read(2000)) # Show first 2000 chars
-                return None
+                
+                # Check for an error. The returncode is non-zero on failure.
+                if process.returncode != 0:
+                    st.error("LaTeX compilation failed.")
+                    st.subheader("pdflatex Error Output (stderr):")
+                    st.text(process.stderr)
+                    # Try to find the .log file and display its full content
+                    log_path = os.path.join(tmpdir, "diagram.log")
+                    if os.path.exists(log_path):
+                        with open(log_path, "r") as log_file:
+                            st.subheader("Full LaTeX Log File:")
+                            st.text(log_file.read()) # Read the entire log file
+                    return None
+
             except subprocess.TimeoutExpired:
                 st.error("LaTeX compilation timed out.")
                 return None
+            # --- END MODIFIED ---
 
-
-            # Convert the PDF to a PNG image
+            # Check if the PDF file was actually created before proceeding
             pdf_path = os.path.join(tmpdir, "diagram.pdf")
-            png_output_base = os.path.join(tmpdir, "diagram-img")
+            if not os.path.exists(pdf_path):
+                st.error("pdflatex completed but did not produce a PDF file.")
+                # This could happen if the compilation failed on a non-critical error that
+                # didn't trigger a non-zero exit code, but was still fatal for the output.
+                return None
 
+            # --- Convert the PDF to a PNG image ---
+            png_output_base = os.path.join(tmpdir, "diagram-img")
             try:
                 subprocess.run(
                     ["pdftoppm", "-png", "-singlefile", pdf_path, png_output_base],
@@ -93,7 +111,7 @@ def render_latex(latex_code):
                 st.error(f"PDF to PNG conversion failed. Error:\n{e.stderr}")
                 return None
 
-            # Open and return the image
+            # --- Use glob to find the generated PNG file ---
             png_files = glob.glob(f"{png_output_base}*.png")
             if png_files:
                 final_png_path = png_files[0]
@@ -101,7 +119,6 @@ def render_latex(latex_code):
             else:
                 st.error("Could not find the generated PNG file after conversion.")
                 return None
-
 
     except Exception as e:
         st.error(f"An unexpected error occurred during rendering: {e}")
