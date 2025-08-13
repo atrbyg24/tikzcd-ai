@@ -153,8 +153,6 @@ if st.button("Generate TikZ Code", disabled=(st.session_state.get('uploaded_imag
 
         if tikz_output:
             st.session_state.tikz_output = tikz_output
-            # Render the LaTeX code to an image
-            st.session_state.rendered_image = render_latex(tikz_output)
         else:
             st.session_state.tikz_output = None
             st.session_state.rendered_image = None
