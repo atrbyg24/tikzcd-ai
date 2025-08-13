@@ -47,12 +47,18 @@ def render_latex(latex_code):
     """
     if not latex_code:
         return None
+    
+    lines = latex_code.strip().split('\n')
+    if lines and lines[0].strip() == '```latex' and lines[-1].strip() == '```':
+        clean_latex_code = '\n'.join(lines[1:-1])
+    else:
+        clean_latex_code = latex_code
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a .tex file
             tex_path = os.path.join(tmpdir, "diagram.tex")
             with open(tex_path, "w") as f:
-                f.write(latex_code)
+                f.write(clean_latex_code)
 
             # Compile the LaTeX file to PDF
             try:
