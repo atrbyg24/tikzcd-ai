@@ -2,25 +2,26 @@
     font-family: 'Helvetica Neue', sans-serif;
     font-weight: 700;
     text-align: center;
-    color: #222222; 
+    color: #212121;
     margin-bottom: 0;
 }
 
 .main-subheader {
     font-family: 'Helvetica Neue', sans-serif;
     text-align: center;
-    color: #444444; 
+    color: #424242;
     margin-top: 0;
 }
 
 .stApp {
-    background-color: #f0f2f6; 
-    color: #222222; 
+    background-color: #f0f2f6;
+    color: #212121;
+}
 
 .custom-container {
     border-radius: 12px;
     padding: 20px;
-    background-color: white; 
+    background-color: #ffffff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     margin-bottom: 20px;
 }
@@ -32,7 +33,7 @@
     width: 100%;
     border-radius: 8px;
     border: none;
-    background-color: #008cba; 
+    background-color: #008cba;
     color: white;
     font-size: 16px;
     font-weight: bold;
@@ -53,7 +54,7 @@
 .css-15tx9k2 {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #222222; 
+    color: #212121;
 }
 
 .streamlit-expanderHeader {
@@ -61,9 +62,24 @@
     border-radius: 8px;
     padding: 10px;
     font-weight: bold;
-    color: #222222;
+    color: #212121;
+}
+
+/* Style for the "Browse files" button */
+[data-testid="stFileUploader"] label {
+    background-color: #008cba;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+[data-testid="stFileUploader"] label:hover {
+    background-color: #00739e;
+    cursor: pointer;
 }
 
 p {
-  color: #444444 !important;
+  color: #212121 !important;
 }
