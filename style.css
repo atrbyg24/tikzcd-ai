@@ -2,21 +2,20 @@
     font-family: 'Helvetica Neue', sans-serif;
     font-weight: 700;
     text-align: center;
-    color: #333333;
+    color: #222222; 
     margin-bottom: 0;
 }
 
 .main-subheader {
     font-family: 'Helvetica Neue', sans-serif;
     text-align: center;
-    color: #555555;
+    color: #444444; 
     margin-top: 0;
 }
 
 .stApp {
-    background-color: #f5f5f5; 
-    color: #333333; 
-}
+    background-color: #f0f2f6; 
+    color: #222222; 
 
 .custom-container {
     border-radius: 12px;
@@ -30,7 +29,6 @@
     display: block;
     max-width: 300px;
     margin: 0 auto;
-    
     width: 100%;
     border-radius: 8px;
     border: none;
@@ -55,7 +53,7 @@
 .css-15tx9k2 {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #333333; 
+    color: #222222; 
 }
 
 .streamlit-expanderHeader {
@@ -63,5 +61,9 @@
     border-radius: 8px;
     padding: 10px;
     font-weight: bold;
-    color: #333333;
+    color: #222222;
+}
+
+p {
+  color: #444444 !important;
 }
