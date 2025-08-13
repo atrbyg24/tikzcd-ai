@@ -57,7 +57,7 @@ def render_latex(latex_code):
             # Compile the LaTeX file to PDF
             try:
                 process = subprocess.run(
-                    ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
+                    ["/usr/bin/pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
                     check=True,
                     capture_output=True,
                     text=True,
@@ -84,7 +84,7 @@ def render_latex(latex_code):
 
             try:
                 subprocess.run(
-                    ["pdftoppm", "-png", "-singlefile", pdf_path, png_output_base],
+                    ["/usr/bin/pdftoppm", "-png", "-singlefile", pdf_path, png_output_base],
                     check=True,
                     capture_output=True,
                     text=True
