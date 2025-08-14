@@ -7,6 +7,7 @@ import io
 from google import genai
 from google.genai import types
 import os
+import streamlit.components.v1 as components
 
 examples_dir = "examples"
 
@@ -108,7 +109,7 @@ def load_css(file_name):
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 # --- Streamlit UI ---
-st.set_page_config(page_title="Diagram to TikZ-cd Converter", layout="centered")
+st.set_page_config(page_title="Diagram to TikZ-cd Converter", layout="wide")
 load_css("style.css")
 st.title("Diagram to TikZ-cd Converter")
 st.markdown("Upload an image of a commutative diagram and get the LaTeX code, powered by the Gemini API with few-shot prompting.")
@@ -129,9 +130,10 @@ examples = load_examples(example_names, examples_dir)
 
 # --- Main App Layout ---
 # Use columns for a cleaner layout
-col1, col2 = st.columns([2, 2], gap="large")
 
-with col1:
+col1, col2, col3, col4, col5 = st.columns([1,4,4,4,1], gap="large")
+
+with col2:
     st.write("### 1. Upload Diagram")
     uploaded_file = st.file_uploader(
         "Choose an image of a commutative diagram...",
@@ -143,7 +145,7 @@ with col1:
         image_bytes = io.BytesIO(uploaded_file.getvalue())
         pil_image = Image.open(image_bytes)
         
-        st.image(pil_image, caption="Uploaded Diagram", use_container_width=True)
+        st.image(pil_image, caption="Uploaded Diagram")
 
         # Store the uploaded image in the session state
         st.session_state.uploaded_image = pil_image
@@ -166,9 +168,51 @@ if st.button("Generate TikZ Code", disabled=(st.session_state.get('uploaded_imag
 
         progress_bar.empty()
 
-with col2:
+with col3:
     st.write("### 2. Generated Code")
     if 'tikz_output' in st.session_state and st.session_state.tikz_output:
         st.code(st.session_state.tikz_output, language='latex')
     else:
         st.info("The generated LaTeX code will appear here.")
+
+with col4:
+    st.write("### 3. Live Preview")
+    if 'tikz_output' in st.session_state and st.session_state.tikz_output:
+        start_marker = "\\begin{tikzcd}"
+        end_marker = "\\end{tikzcd}"
+
+        start_index = st.session_state.tikz_output.find(start_marker)
+        end_index = st.session_state.tikz_output.find(end_marker)
+
+        tikz_content = ""
+        tikz_content = st.session_state.tikz_output[start_index : end_index + len(end_marker)]
+
+        html_code = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>TikZ Preview</title>
+            <link rel="stylesheet" type="text/css" href="https://tikzjax.com/v1/fonts.css">
+            <script src="https://tikzjax.com/v1/tikzjax.js"></script>
+            <style>
+                body {{
+                    background-color: rgb(250, 250, 250); 
+                    margin: 0;
+                    height: 100vh; 
+                    width: 100vw; 
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    overflow: auto;
+                }}
+            </style>
+        </head>
+        <body>
+            <script type="text/tikz">  
+                {tikz_content}
+            </script>
+        </body>
+        </html>
+        """
+
+        components.html(html_code, height=500, scrolling=True)
