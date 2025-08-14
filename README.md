@@ -56,5 +56,5 @@ your-project-name/
 
 ## **To-do**
 
-*In-app Latex rendering
-*Manually edit code
+* ~~In-app Latex rendering~~
+* Manually edit code
