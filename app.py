@@ -152,14 +152,6 @@ with col2:
     else:
         st.session_state.uploaded_image = None
 
-    
-
-with col3:
-    st.write("### 2. Generated Code")
-    if 'tikz_output' in st.session_state and st.session_state.tikz_output:
-        st.code(st.session_state.tikz_output, language='latex')
-    else:
-        st.info("The generated LaTeX code will appear here.")
     if st.button("Generate TikZ Code", disabled=(st.session_state.get('uploaded_image') is None)):
         if 'uploaded_image' in st.session_state:
             pil_image = st.session_state.uploaded_image
@@ -175,6 +167,13 @@ with col3:
                 st.session_state.rendered_image = None
 
             progress_bar.empty()
+
+with col3:
+    st.write("### 2. Generated Code")
+    if 'tikz_output' in st.session_state and st.session_state.tikz_output:
+        st.code(st.session_state.tikz_output, language='latex')
+    else:
+        st.info("The generated LaTeX code will appear here.")
 
 with col4:
     st.write("### 3. Live Preview")
