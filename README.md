@@ -57,4 +57,5 @@ your-project-name/
 ## **To-do**
 
 * ~~In-app Latex rendering~~
+* Dynamically scale live preview
 * Manually edit code
