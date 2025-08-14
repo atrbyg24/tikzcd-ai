@@ -52,7 +52,7 @@ your-project-name/
 ├── .streamlit/  
 ├── docs/  
 ├── examples/  
-├── requirements.txt
+├── requirements.txt 
 ├── packages.txt  
 ├── style.css    
 └── app.py
