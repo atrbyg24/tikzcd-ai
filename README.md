@@ -41,22 +41,10 @@ To run the application, you need:
 1. Run the app:  
    You can try the live version here: https://atrbyg24-tikzcd-ai-app-rrzfzq.streamlit.app/  
    To run it locally, use:  
-   streamlit run your\_main\_script\_name.py
+   streamlit run app.py
 
 2. Use the web interface:  
    Upload an image, click "Generate TikZ Code," and the application will display the LaTeX code.
-
-## **📁 Project Structure**
-
-your-project-name/  
-├── .streamlit/  
-├── docs/  
-├── examples/  
-├── requirements.txt 
-├── packages.txt  
-├── style.css    
-└── app.py
-
 
 ## **To-do**
 
