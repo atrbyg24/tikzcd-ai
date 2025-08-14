@@ -147,6 +147,8 @@ with col1:
 
         # Store the uploaded image in the session state
         st.session_state.uploaded_image = pil_image
+    else:
+        st.session_state.uploaded_image = None
 
 if st.button("Generate TikZ Code", disabled=(st.session_state.get('uploaded_image') is None)):
     if 'uploaded_image' in st.session_state:

@@ -2,7 +2,7 @@
     font-family: 'Helvetica Neue', sans-serif;
     font-weight: 700;
     text-align: center;
-    color: #212121;
+    color: #262730;
     margin-bottom: 0;
 }
 
@@ -13,19 +13,71 @@
     margin-top: 0;
 }
 
+.stApp {
+    background-color: #f6f5dc;
+    color: #262730;
+}
+
+.custom-container {
+    border-radius: 12px;
+    padding: 20px;
+    background-color: #e6f7ff; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+}
+
 .stButton > button {
     display: block;
     max-width: 300px;
     margin: 0 auto;
     width: 100%;
     border-radius: 8px;
-    border: 1px white;
+    border: none;
+    background-color: rgb(217, 85, 85);
+    color: rgb(250, 250, 250);;
     font-size: 16px;
     font-weight: bold;
     padding: 12px;
     transition: all 0.3s ease;
 }
 
+.stButton > button:not(:disabled):hover {
+    background-color: rgb(214, 60, 60);
+    transform: translateY(-2px);
+}
+
 .stButton > button:disabled {
+    background-color: #cccccc;
     cursor: not-allowed;
+}
+
+.stButton > button:disabled:hover {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.css-15tx9k2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #262730;
+}
+
+.streamlit-expanderHeader {
+    background-color: #e6e6e6;
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: bold;
+    color: #262730;
+}
+
+.stFileUploaderFile {
+    background-color: #262730;
+    color: rgb(250, 250, 250);; 
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+p {
+  color: #262730;
 }
