@@ -2,6 +2,8 @@
 
 This Streamlit web application converts an image of a commutative diagram into its corresponding **LaTeX code**. The application uses a sophisticated pipeline that combines a multi-modal large language model (LLM) with **few-shot prompting** to accurately interpret diagrams and generate precise code.
 
+![tikzcd-ai example image](example.png)
+
 ## **✨ Features**
 
 * **Multi-modal AI:** Uses the **Gemini API** to understand both the visual layout of the diagram and the text within the image.  
