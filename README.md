@@ -49,5 +49,5 @@ To run the application, you need:
 ## **To-do**
 
 * ~~In-app Latex rendering~~
-* Dynamically scale live preview
+* ~~Dynamically scale live preview~~
 * Manually edit code

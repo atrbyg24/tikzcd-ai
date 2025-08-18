@@ -205,6 +205,17 @@ with col4:
                     align-items: center;
                     overflow: auto;
                 }}
+                body > div, body > div > div {{
+                    width: 100% !important;
+                    height: 100% !important;
+                }}
+        
+                svg {{
+                    width: 100% !important; 
+                height: 100% !important;
+                object-fit: contain;     
+                }}
+
             </style>
         </head>
         <body>
@@ -215,4 +226,4 @@ with col4:
         </html>
         """
 
-        components.html(html_code, height=500, scrolling=True)
+        components.html(html_code, height=500)
