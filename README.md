@@ -8,7 +8,7 @@ This Streamlit web application converts an image of a commutative diagram into i
 
 * **Multi-modal AI:** Uses the **Gemini API** to understand both the visual layout of the diagram and the text within the image.  
 * **Few-Shot Prompting:** Provides the model with a few high-quality examples to establish a consistent and accurate output format.  
-* **Optical Character Recognition (OCR):** Employs **pytesseract** and **OpenCV** to extract text labels from the diagram image, which is a critical step for the RAG search.  
+* **Optical Character Recognition (OCR):** Employs **pytesseract** and **OpenCV** to extract text labels from the diagram image.  
 * **Streamlit GUI:** A user-friendly web interface for uploading images and viewing the generated code.
 
 ## **🚀 Prerequisites**
